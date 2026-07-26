@@ -14,7 +14,10 @@ phases:
     commands:
       - echo "Syncing static site build to AWS S3..."
       - aws s3 sync apps/web/out s3://${S3_BUCKET_NAME:-unite-attendance} --delete
-      - echo "Deployment to AWS S3 finished successfully."
+      - echo "Invalidating CloudFront cache..."
+      - aws cloudfront create-invalidation --distribution-id ${CLOUDFRONT_DISTRIBUTION_ID:-E2TL9KPGA9YP0K} --paths "/*"
+      - echo "Deployment to AWS S3 & CloudFront finished successfully."
+
 
 artifacts:
   files:
