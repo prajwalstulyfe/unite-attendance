@@ -1,0 +1,22 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 22
+    commands:
+      - npx corepack enable
+      - pnpm install --no-frozen-lockfile
+  build:
+    commands:
+      - pnpm run build
+  post_build:
+    commands:
+      - echo "Syncing static site build to AWS S3..."
+      - aws s3 sync apps/web/out s3://${S3_BUCKET_NAME:-unite-attendance} --delete
+      - echo "Deployment to AWS S3 finished successfully."
+
+artifacts:
+  files:
+    - '**/*'
+  base-directory: apps/web/out
