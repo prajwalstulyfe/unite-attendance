@@ -61,7 +61,7 @@ export default function AppLoginPage() {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = `${API_BASE_URL}/auth/google`;
+    window.location.href = `${API_BASE_URL}/auth/google?state=app`;
   };
 
   return (

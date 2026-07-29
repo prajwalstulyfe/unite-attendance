@@ -43,7 +43,12 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(@Req() req: any, @Res() res: any) {
-    const frontendUrl = process.env['NEXT_PUBLIC_ADMIN_URL'] || 'https://admin.unite-attendance.com';
+    const adminUrl = process.env['NEXT_PUBLIC_ADMIN_URL'] || 'https://admin.unite-attendance.com';
+    const appUrl = process.env['NEXT_PUBLIC_APP_URL'] || 'https://app.unite-attendance.com';
+    const state = req.query?.state || '';
+    const referer = req.headers?.referer || '';
+    const frontendUrl = (state.includes('admin') || referer.includes('admin')) ? adminUrl : appUrl;
+
     try {
       const tokens = await this.authService.validateGoogleUser(req.user);
       return res.redirect(`${frontendUrl}/login?token=${tokens.accessToken}&refresh=${tokens.refreshToken}`);

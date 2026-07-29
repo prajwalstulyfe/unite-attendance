@@ -105,7 +105,7 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = `${API_BASE_URL}/auth/google`;
+    window.location.href = `${API_BASE_URL}/auth/google?state=admin`;
   };
 
   const handleQuickFill = (demoEmail: string) => {

@@ -1,5 +1,6 @@
 import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { GlobalRole } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { LoginDto, RegisterDto, RefreshTokenDto } from './dto/auth.dto.js';
 import * as bcrypt from 'bcrypt';
@@ -159,7 +160,7 @@ export class AuthService {
       );
     }
 
-    if ((user.globalRole as string) !== 'SUPER_ADMIN' && user.orgMemberships.length === 0) {
+    if (user.globalRole !== GlobalRole.SUPER_ADMIN && user.orgMemberships.length === 0) {
       throw new UnauthorizedException(
         `Account ${googleUser.email} is not linked to any active organization.`
       );

@@ -6,10 +6,19 @@ import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor(configService: ConfigService) {
+    const rawCallback = configService.get<string>('GOOGLE_CALLBACK_URL') || '';
+    const isProd = process.env.NODE_ENV === 'production' || process.env['API_URL']?.includes('unite-attendance.com');
+    
+    // Auto-fix if .env has localhost URL on production server
+    let callbackURL = rawCallback || 'https://api.unite-attendance.com/auth/google/callback';
+    if (isProd && callbackURL.includes('localhost')) {
+      callbackURL = 'https://api.unite-attendance.com/auth/google/callback';
+    }
+
     super({
       clientID: configService.get<string>('GOOGLE_CLIENT_ID') || 'dummy',
       clientSecret: configService.get<string>('GOOGLE_CLIENT_SECRET') || 'dummy',
-      callbackURL: configService.get<string>('GOOGLE_CALLBACK_URL') || 'https://api.unite-attendance.com/auth/google/callback',
+      callbackURL,
       scope: ['email', 'profile'],
     });
   }
