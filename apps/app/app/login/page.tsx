@@ -46,21 +46,18 @@ export default function AppLoginPage() {
     try {
       const res = await loginMutation.mutateAsync({
         email: emailOrEmpId,
-        password: password || "changeme123!",
+        password: password,
       });
 
       if (res?.accessToken) {
         tokenStorage.setTokens(res.accessToken, res.refreshToken);
+        toast.success("Welcome back! Digital Pass Activated.");
+        router.push("/");
       } else {
-        tokenStorage.setTokens("member_session_token_123", "member_refresh_token_123");
+        toast.error("Login failed. No token returned from server.");
       }
-
-      toast.success("Welcome back! Digital Pass Activated.");
-      router.push("/");
     } catch (err: any) {
-      tokenStorage.setTokens("member_session_token_123", "member_refresh_token_123");
-      toast.success("Welcome back! Digital Pass Activated.");
-      router.push("/");
+      toast.error(err?.response?.data?.message || err?.message || "Invalid credentials. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

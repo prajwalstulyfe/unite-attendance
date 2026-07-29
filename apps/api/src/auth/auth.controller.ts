@@ -51,7 +51,7 @@ export class AuthController {
     const frontendUrl = isAdmin ? adminUrl : appUrl;
 
     try {
-      const tokens = await this.authService.validateGoogleUser(req.user, !isAdmin);
+      const tokens = await this.authService.validateGoogleUser(req.user);
       return res.redirect(`${frontendUrl}/login?token=${tokens.accessToken}&refresh=${tokens.refreshToken}`);
     } catch (err: any) {
       const errorMsg = encodeURIComponent(err.message || 'Google Authentication Failed');

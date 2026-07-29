@@ -7,11 +7,13 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { toast } from "sonner";
 
 import { useRouter } from "next/navigation";
+import { tokenStorage } from "@repo/api-client";
 
 export default function ProfilePage() {
   const router = useRouter();
 
   const handleLogout = () => {
+    tokenStorage.clear();
     toast.info("Logged out of Employee Pass");
     router.push("/login");
   };

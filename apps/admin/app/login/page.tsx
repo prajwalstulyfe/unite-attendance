@@ -55,47 +55,26 @@ export default function LoginPage() {
     if (!email || !password) return;
     setLoading(true);
 
-    const isSuperAdminEmail = email === "admin@unite-attendance.com";
-
-    // Demo bypass ONLY allowed on local localhost development
-    if (
-      isLocalhost &&
-      (isSuperAdminEmail || email === "john@acme.com" || email === "jane@acme.com")
-    ) {
-      tokenStorage.setTokens("demo_access_token_123", "demo_refresh_token_123");
-      if (isSuperAdminEmail) {
-        setIsSuperAdminUser(true);
-        setPortalMode("SUPER");
-        toast.success("Super Admin Authorized! (Dev Mode)");
-        router.push("/super-admin/dashboard");
-      } else {
-        setIsSuperAdminUser(false);
-        setPortalMode("ORG");
-        toast.success("Organization Login Authorized! (Dev Mode)");
-        router.push("/dashboard");
-      }
-      setLoading(false);
-      return;
-    }
-
     try {
       const res = await loginMutation.mutateAsync({ email, password });
       if (res?.accessToken) {
         tokenStorage.setTokens(res.accessToken, res.refreshToken);
-      } else {
-        tokenStorage.setTokens("session_authenticated_token", "session_refresh_token");
-      }
+        const isSuperAdminEmail = email === "admin@unite-attendance.com";
+        const isSuper = res?.user?.globalRole === "super_admin" || isSuperAdminEmail;
 
-      if (res?.user?.globalRole === "super_admin" || isSuperAdminEmail) {
-        setIsSuperAdminUser(true);
-        setPortalMode("SUPER");
-        toast.success("Super Admin Login successful!");
-        router.push("/super-admin/dashboard");
+        if (isSuper) {
+          setIsSuperAdminUser(true);
+          setPortalMode("SUPER");
+          toast.success("Super Admin Login successful!");
+          router.push("/super-admin/dashboard");
+        } else {
+          setIsSuperAdminUser(false);
+          setPortalMode("ORG");
+          toast.success("Login successful!");
+          router.push("/dashboard");
+        }
       } else {
-        setIsSuperAdminUser(false);
-        setPortalMode("ORG");
-        toast.success("Login successful!");
-        router.push("/dashboard");
+        toast.error("Login failed. No token returned from server.");
       }
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Invalid credentials. Please try again.");

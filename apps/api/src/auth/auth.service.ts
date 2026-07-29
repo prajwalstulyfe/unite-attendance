@@ -140,11 +140,8 @@ export class AuthService {
     };
   }
 
-  async validateGoogleUser(
-    googleUser: { email: string; firstName: string; lastName: string },
-    isMemberApp: boolean = false,
-  ) {
-    let user = await this.prisma.user.findUnique({
+  async validateGoogleUser(googleUser: { email: string; firstName: string; lastName: string }) {
+    const user = await this.prisma.user.findUnique({
       where: { email: googleUser.email.toLowerCase() },
       include: {
         orgMemberships: {
@@ -158,86 +155,15 @@ export class AuthService {
     });
 
     if (!user) {
-      if (!isMemberApp) {
-        throw new UnauthorizedException(
-          `No account found for ${googleUser.email}. Please register your organization first.`
-        );
-      }
-
-      const fallbackName = googleUser.email.split('@')[0] || googleUser.email;
-      const fullName = `${googleUser.firstName || ''} ${googleUser.lastName || ''}`.trim();
-      user = await this.prisma.user.create({
-        data: {
-          email: googleUser.email.toLowerCase(),
-          name: fullName || fallbackName,
-        },
-        include: {
-          orgMemberships: {
-            include: {
-              organization: true,
-              department: true,
-              branch: true,
-            },
-          },
-        },
-      });
+      throw new UnauthorizedException(
+        `No account found for ${googleUser.email}. Please register your organization first.`
+      );
     }
 
     if (user.globalRole !== GlobalRole.SUPER_ADMIN && user.orgMemberships.length === 0) {
-      if (isMemberApp) {
-        // Auto-assign Google sign-in users to active default organization as Member for Member App
-        const defaultOrg = await this.prisma.organization.findFirst({
-          where: { isActive: true },
-          orderBy: { createdAt: 'asc' },
-        });
-
-        if (defaultOrg) {
-          const empCount = await this.prisma.orgMember.count({ where: { orgId: defaultOrg.id } });
-          const newMember = await this.prisma.orgMember.create({
-            data: {
-              userId: user.id,
-              orgId: defaultOrg.id,
-              role: OrgRole.MEMBER,
-              employeeId: `EMP-${100 + empCount + 1}`,
-            },
-          });
-
-          // Generate digital pass QR token for attendance
-          await this.prisma.qRCode.create({
-            data: {
-              memberId: newMember.id,
-              orgId: defaultOrg.id,
-              qrToken: `TOKEN_${newMember.id}_GOOGLE`,
-              type: 'MOBILE',
-              isActive: true,
-            },
-          });
-
-          const reloadedUser = await this.prisma.user.findUnique({
-            where: { id: user.id },
-            include: {
-              orgMemberships: {
-                include: {
-                  organization: true,
-                  department: true,
-                  branch: true,
-                },
-              },
-            },
-          });
-          if (reloadedUser) {
-            user = reloadedUser;
-          }
-        } else {
-          throw new UnauthorizedException(
-            `Account ${googleUser.email} is not linked to any active organization.`
-          );
-        }
-      } else {
-        throw new UnauthorizedException(
-          `Account ${googleUser.email} is not linked to any active organization.`
-        );
-      }
+      throw new UnauthorizedException(
+        `Account ${googleUser.email} is not linked to any active organization.`
+      );
     }
 
     return this.generateTokens(user.id, user.email, user.globalRole);
