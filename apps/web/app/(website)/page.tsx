@@ -1,17 +1,29 @@
-import { Button } from "@/components/ui/button";
+"use client";
+
+import { Navbar } from "@/components/navbar";
+import { HeroSection } from "@/components/hero-section";
+import { EcosystemSection } from "@/components/ecosystem-section";
+import { FeatureGrid } from "@/components/feature-grid";
+import { WorkflowSection } from "@/components/workflow-section";
+import { PricingSection } from "@/components/pricing-section";
+import { FaqSection } from "@/components/faq-section";
+import { CtaSection } from "@/components/cta-section";
+import { Footer } from "@/components/footer";
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-6 md:p-24 gap-6 text-center">
-      <h1 className="text-3xl sm:text-5xl font-bold tracking-tight">Unite Attendance</h1>
-      <p className="text-muted-foreground text-center max-w-md text-sm sm:text-base">
-        Scalable, Secure, and Seamless Attendance Management for Educational Institutions and Organizations.
-      </p>
-      <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto max-w-xs sm:max-w-none">
-        <Button variant="default" className="w-full sm:w-auto">Get Started</Button>
-        <Button variant="outline" className="w-full sm:w-auto">Documentation</Button>
-      </div>
-    </main>
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col selection:bg-indigo-500 selection:text-white font-sans">
+      <Navbar />
+      <main className="flex-1">
+        <HeroSection />
+        <EcosystemSection />
+        <FeatureGrid />
+        <WorkflowSection />
+        <PricingSection />
+        <FaqSection />
+        <CtaSection />
+      </main>
+      <Footer />
+    </div>
   );
 }
-

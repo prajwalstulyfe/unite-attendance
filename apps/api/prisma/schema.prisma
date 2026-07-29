@@ -1,0 +1,273 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Users ──────────────────────────────────────────────────────
+model User {
+  id           String     @id @default(uuid()) @db.Uuid
+  email        String     @unique
+  name         String
+  avatarUrl    String?    @map("avatar_url")
+  passwordHash String?    @map("password_hash")
+  globalRole   GlobalRole @default(USER) @map("global_role")
+  googleId     String?    @unique @map("google_id")
+  isActive     Boolean    @default(true) @map("is_active")
+  refreshToken String?    @map("refresh_token")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  orgMemberships OrgMember[]
+
+  @@map("users")
+}
+
+enum GlobalRole {
+  SUPER_ADMIN @map("super_admin")
+  USER        @map("user")
+
+  @@map("global_role")
+}
+
+// ─── Organizations ──────────────────────────────────────────────
+model Organization {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  slug      String   @unique
+  logo      String?
+  plan      Plan     @default(FREE)
+  settings  Json     @default("{}")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  members           OrgMember[]
+  branches          Branch[]
+  departments       Department[]
+  attendanceRules   AttendanceRule[]
+  attendanceRecords AttendanceRecord[]
+  qrCodes           QRCode[]
+  subscriptions     Subscription[]
+
+  @@map("organizations")
+}
+
+enum Plan {
+  FREE       @map("free")
+  STARTER    @map("starter")
+  PRO        @map("pro")
+  ENTERPRISE @map("enterprise")
+
+  @@map("plan")
+}
+
+// ─── Organization Members ───────────────────────────────────────
+model OrgMember {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  orgId        String   @map("org_id") @db.Uuid
+  role         OrgRole  @default(MEMBER)
+  departmentId String?  @map("department_id") @db.Uuid
+  branchId     String?  @map("branch_id") @db.Uuid
+  employeeId   String?  @map("employee_id")
+  designation  String?
+  phone        String?
+  isActive     Boolean  @default(true) @map("is_active")
+  joinedAt     DateTime @default(now()) @map("joined_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  department   Department?  @relation(fields: [departmentId], references: [id])
+  branch       Branch?      @relation(fields: [branchId], references: [id])
+
+  qrCodes           QRCode[]
+  attendanceRecords AttendanceRecord[]
+  scannedRecords    AttendanceRecord[] @relation("ScannedBy")
+
+  @@unique([userId, orgId])
+  @@index([orgId])
+  @@index([orgId, role])
+  @@index([orgId, departmentId])
+  @@index([orgId, branchId])
+  @@map("org_members")
+}
+
+enum OrgRole {
+  ORG_ADMIN @map("org_admin")
+  MANAGER   @map("manager")
+  VIEWER    @map("viewer")
+  MEMBER    @map("member")
+
+  @@map("org_role")
+}
+
+// ─── Branches ───────────────────────────────────────────────────
+model Branch {
+  id        String   @id @default(uuid()) @db.Uuid
+  orgId     String   @map("org_id") @db.Uuid
+  name      String
+  address   String?
+  location  Json?
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  departments  Department[]
+  members      OrgMember[]
+
+  @@index([orgId])
+  @@map("branches")
+}
+
+// ─── Departments ────────────────────────────────────────────────
+model Department {
+  id        String   @id @default(uuid()) @db.Uuid
+  orgId     String   @map("org_id") @db.Uuid
+  branchId  String?  @map("branch_id") @db.Uuid
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  branch       Branch?      @relation(fields: [branchId], references: [id])
+  members      OrgMember[]
+
+  @@index([orgId])
+  @@map("departments")
+}
+
+// ─── QR Codes ───────────────────────────────────────────────────
+model QRCode {
+  id         String     @id @default(uuid()) @db.Uuid
+  memberId   String     @map("member_id") @db.Uuid
+  orgId      String     @map("org_id") @db.Uuid
+  qrToken    String     @unique @map("qr_token")
+  qrImageUrl String?    @map("qr_image_url")
+  type       QRCodeType @default(MOBILE)
+  isActive   Boolean    @default(true) @map("is_active")
+  expiresAt  DateTime?  @map("expires_at")
+  createdAt  DateTime   @default(now()) @map("created_at")
+
+  member       OrgMember    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([memberId])
+  @@map("qr_codes")
+}
+
+enum QRCodeType {
+  MOBILE  @map("mobile")
+  ID_CARD @map("id_card")
+
+  @@map("qr_code_type")
+}
+
+// ─── Attendance Records ─────────────────────────────────────────
+model AttendanceRecord {
+  id               String           @id @default(uuid()) @db.Uuid
+  memberId         String           @map("member_id") @db.Uuid
+  orgId            String           @map("org_id") @db.Uuid
+  type             AttendanceType
+  timestamp        DateTime         @default(now())
+  method           AttendanceMethod
+  scannedById      String?          @map("scanned_by_id") @db.Uuid
+  deviceInfo       Json?            @map("device_info")
+  gpsLocation      Json?            @map("gps_location")
+  status           AttendanceStatus @default(VALID)
+  validationErrors String[]         @default([]) @map("validation_errors")
+  notes            String?
+  createdAt        DateTime         @default(now()) @map("created_at")
+
+  member       OrgMember    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  scannedBy    OrgMember?   @relation("ScannedBy", fields: [scannedById], references: [id])
+
+  @@index([orgId, timestamp])
+  @@index([orgId, memberId, timestamp])
+  @@index([orgId, status])
+  @@map("attendance_records")
+}
+
+enum AttendanceType {
+  CHECK_IN  @map("check_in")
+  CHECK_OUT @map("check_out")
+
+  @@map("attendance_type")
+}
+
+enum AttendanceMethod {
+  QR_MOBILE @map("qr_mobile")
+  QR_IDCARD @map("qr_idcard")
+  QR_KIOSK  @map("qr_kiosk")
+  MANUAL    @map("manual")
+
+  @@map("attendance_method")
+}
+
+enum AttendanceStatus {
+  VALID   @map("valid")
+  INVALID @map("invalid")
+  FLAGGED @map("flagged")
+
+  @@map("attendance_status")
+}
+
+// ─── Attendance Rules ───────────────────────────────────────────
+model AttendanceRule {
+  id                  String   @id @default(uuid()) @db.Uuid
+  orgId               String   @map("org_id") @db.Uuid
+  name                String
+  workStart           String   @map("work_start")
+  workEnd             String   @map("work_end")
+  lateThresholdMin    Int      @default(15) @map("late_threshold_min")
+  halfDayThresholdMin Int      @default(240) @map("half_day_threshold_min")
+  requireGps          Boolean  @default(false) @map("require_gps")
+  allowedLocations    Json?    @map("allowed_locations")
+  gpsRadiusMeters     Int      @default(200) @map("gps_radius_meters")
+  workingDays         String[] @default(["mon", "tue", "wed", "thu", "fri"]) @map("working_days")
+  holidayCalendar     Json?    @map("holiday_calendar")
+  preventDuplicateMin Int      @default(5) @map("prevent_duplicate_min")
+  isDefault           Boolean  @default(false) @map("is_default")
+  isActive            Boolean  @default(true) @map("is_active")
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@map("attendance_rules")
+}
+
+// ─── Subscriptions (Razorpay) ───────────────────────────────────
+model Subscription {
+  id                     String             @id @default(uuid()) @db.Uuid
+  orgId                  String             @map("org_id") @db.Uuid
+  razorpaySubscriptionId String?            @unique @map("razorpay_subscription_id")
+  razorpayPlanId         String?            @map("razorpay_plan_id")
+  plan                   Plan
+  status                 SubscriptionStatus @default(ACTIVE)
+  currentPeriodStart     DateTime?          @map("current_period_start")
+  currentPeriodEnd       DateTime?          @map("current_period_end")
+  cancelledAt            DateTime?          @map("cancelled_at")
+  createdAt              DateTime           @default(now()) @map("created_at")
+  updatedAt              DateTime           @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@map("subscriptions")
+}
+
+enum SubscriptionStatus {
+  ACTIVE    @map("active")
+  PAST_DUE  @map("past_due")
+  CANCELLED @map("cancelled")
+  TRIALING  @map("trialing")
+
+  @@map("subscription_status")
+}

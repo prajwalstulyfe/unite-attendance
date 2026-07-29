@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: #09090b;
+  --foreground: #fafafa;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  overflow: hidden;
+  user-select: none;
+}
+
+/* Hide html5-qrcode library built-in scan region UI */
+#kiosk-camera-reader video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border: none !important;
+}
+
+#kiosk-camera-reader img[alt="Info icon"],
+#kiosk-camera-reader > div:not(:first-child) {
+  display: none !important;
+}
+
+/* Hide the shaded region / scan-region overlay */
+#qr-shaded-region,
+#kiosk-camera-reader canvas,
+#kiosk-camera-reader [style*="border"] {
+  display: none !important;
+}

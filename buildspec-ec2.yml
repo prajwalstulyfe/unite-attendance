@@ -1,0 +1,35 @@
+# CodeBuild buildspec for EC2 deployment pipeline
+# Builds Admin, Kiosk, App (Next.js SSR) and API (NestJS)
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 22
+    commands:
+      - npx corepack enable
+      - pnpm install --no-frozen-lockfile
+
+  pre_build:
+    commands:
+      - echo "Generating Prisma client..."
+      - pnpm --filter api run db:generate
+
+  build:
+    commands:
+      - echo "Building all dynamic apps..."
+      - pnpm turbo build --filter=admin --filter=kiosk --filter=app --filter=api
+
+  post_build:
+    commands:
+      - echo "Build completed successfully."
+      - echo "Deploying to EC2 via CodeDeploy..."
+
+artifacts:
+  files:
+    - '**/*'
+  exclude-paths:
+    - 'node_modules/**/*'
+    - '.git/**/*'
+    - 'apps/web/out/**/*'
+    - '.next/cache/**/*'
