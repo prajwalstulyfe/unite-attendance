@@ -51,7 +51,7 @@ export default function MemberQRPage() {
       </div>
 
       {/* Single Unified High-Tech QR Card */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 shadow-2xl shadow-indigo-500/10 dark:shadow-indigo-500/20 text-center space-y-4">
+      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 shadow-2xl shadow-indigo-500/10 dark:shadow-indigo-500/20 text-center space-y-4 w-full max-w-full min-w-0 overflow-hidden">
         {/* Real Dynamic QR Barcode Display (Stable 30s TOTP) */}
         <QRDisplay
           qrToken={dynamicToken}

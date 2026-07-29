@@ -42,7 +42,7 @@ export default function AppDashboardLayout({
   return (
     <div className="min-h-screen bg-zinc-200 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 flex justify-center transition-colors duration-200">
       {/* 1px Side Bordered Mobile Container Shell */}
-      <div className="w-full max-w-md min-h-screen bg-white dark:bg-zinc-900 border-x border-zinc-300 dark:border-zinc-800 flex flex-col justify-between relative shadow-xl">
+      <div className="w-full max-w-md min-h-screen bg-white dark:bg-zinc-900 border-x border-zinc-300 dark:border-zinc-800 flex flex-col justify-between relative shadow-xl overflow-hidden">
         {/* Native Mobile Viewport Content */}
         <main className="flex-1 p-4">{children}</main>
 
