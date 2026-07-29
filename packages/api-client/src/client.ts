@@ -18,10 +18,31 @@ interface RetryConfig extends InternalAxiosRequestConfig {
  * - Auto-refreshes expired access tokens using refresh token
  * - Standardized error handling
  */
+function getApiBaseUrl(): string {
+  if (typeof window !== 'undefined') {
+    const windowApiUrl = (window as unknown as Record<string, string>).__NEXT_PUBLIC_API_URL;
+    if (windowApiUrl) return windowApiUrl;
+
+    const hostname = window.location.hostname;
+    const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1';
+    const envApiUrl = process.env['NEXT_PUBLIC_API_URL'];
+
+    if (isLocalHost) {
+      return envApiUrl || 'http://localhost:3001';
+    }
+
+    if (!envApiUrl || envApiUrl.includes('localhost') || envApiUrl.includes('127.0.0.1')) {
+      return 'https://api.unite-attendance.com';
+    }
+
+    return envApiUrl;
+  }
+
+  return process.env['NEXT_PUBLIC_API_URL'] || 'http://localhost:3001';
+}
+
 const apiClient = axios.create({
-  baseURL: typeof window !== 'undefined'
-    ? (window as unknown as Record<string, string>).__NEXT_PUBLIC_API_URL ?? process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001'
-    : process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001',
+  baseURL: getApiBaseUrl(),
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',

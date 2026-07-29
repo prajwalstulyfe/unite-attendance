@@ -7,7 +7,16 @@ import { toast } from "sonner";
 import { tokenStorage, useLogin } from "@repo/api-client";
 import { ThemeToggle } from "@/components/theme-toggle";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.unite-attendance.com";
+const getApiBaseUrl = () => {
+  if (typeof window !== "undefined") {
+    const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+    if (!isLocal) {
+      const envUrl = process.env.NEXT_PUBLIC_API_URL;
+      return envUrl && !envUrl.includes("localhost") ? envUrl : "https://api.unite-attendance.com";
+    }
+  }
+  return process.env.NEXT_PUBLIC_API_URL || "https://api.unite-attendance.com";
+};
 
 export default function AppLoginPage() {
   const router = useRouter();
@@ -66,7 +75,7 @@ export default function AppLoginPage() {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = `${API_BASE_URL}/auth/google?state=app`;
+    window.location.href = `${getApiBaseUrl()}/auth/google?state=app`;
   };
 
   return (

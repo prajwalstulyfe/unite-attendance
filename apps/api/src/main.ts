@@ -7,13 +7,22 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // 1. Enable CORS for all frontends (admin, kiosk, app, web)
-  const allowedOrigins = (process.env['CORS_ORIGINS'] || '')
+  const defaultProdOrigins = [
+    'https://unite-attendance.com',
+    'https://www.unite-attendance.com',
+    'https://admin.unite-attendance.com',
+    'https://kiosk.unite-attendance.com',
+    'https://app.unite-attendance.com',
+  ];
+  const envOrigins = (process.env['CORS_ORIGINS'] || '')
     .split(',')
     .map((o) => o.trim())
     .filter(Boolean);
 
+  const allowedOrigins = Array.from(new Set([...envOrigins, ...defaultProdOrigins]));
+
   app.enableCors({
-    origin: allowedOrigins.length > 0 ? allowedOrigins : true,
+    origin: process.env['NODE_ENV'] === 'production' ? allowedOrigins : (envOrigins.length > 0 ? allowedOrigins : true),
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
   });

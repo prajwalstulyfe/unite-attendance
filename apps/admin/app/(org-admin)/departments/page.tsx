@@ -20,6 +20,17 @@ const initialDepartments: DeptItem[] = [
   { id: "dept_04", name: "Operations", code: "OPS", head: "Unassigned", count: 20 },
 ];
 
+const getKioskUrl = (deptId: string) => {
+  if (typeof window !== "undefined") {
+    const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+    const kioskBase = isLocal
+      ? "http://localhost:3003"
+      : (process.env.NEXT_PUBLIC_KIOSK_URL || "https://kiosk.unite-attendance.com");
+    return `${kioskBase}/?deptId=${deptId}`;
+  }
+  return `https://kiosk.unite-attendance.com/?deptId=${deptId}`;
+};
+
 export default function DepartmentsPage() {
   const [departments, setDepartments] = useState<DeptItem[]>(initialDepartments);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -164,7 +175,7 @@ export default function DepartmentsPage() {
             {/* Launch Locked Department Scanner Button */}
             <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800/80">
               <a
-                href={`http://localhost:3003/?deptId=${dept.id}`}
+                href={getKioskUrl(dept.id)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full py-2 px-3 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2 group"

@@ -18,7 +18,7 @@ phases:
   build:
     commands:
       - echo "Building all dynamic apps..."
-      - pnpm turbo build --filter=admin --filter=kiosk --filter=app --filter=api
+      - NEXT_PUBLIC_API_URL="https://api.unite-attendance.com" NEXT_PUBLIC_WS_URL="wss://api.unite-attendance.com/ws" NEXT_PUBLIC_ADMIN_URL="https://admin.unite-attendance.com" NEXT_PUBLIC_KIOSK_URL="https://kiosk.unite-attendance.com" NEXT_PUBLIC_APP_URL="https://app.unite-attendance.com" pnpm turbo build --filter=admin --filter=kiosk --filter=app --filter=api
 
   post_build:
     commands:

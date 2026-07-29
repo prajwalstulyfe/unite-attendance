@@ -16,14 +16,36 @@ export function getSocket(): Socket | null {
   return socket;
 }
 
+function getWsUrl(): string {
+  if (typeof window !== 'undefined') {
+    const windowWsUrl = (window as unknown as Record<string, string>).__NEXT_PUBLIC_WS_URL;
+    if (windowWsUrl) return windowWsUrl;
+
+    const hostname = window.location.hostname;
+    const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1';
+    const envWsUrl = process.env['NEXT_PUBLIC_WS_URL'];
+
+    if (isLocalHost) {
+      return envWsUrl || 'ws://localhost:3001';
+    }
+
+    if (!envWsUrl || envWsUrl.includes('localhost') || envWsUrl.includes('127.0.0.1')) {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      return `${protocol}//api.unite-attendance.com/ws`;
+    }
+
+    return envWsUrl;
+  }
+
+  return process.env['NEXT_PUBLIC_WS_URL'] || 'ws://localhost:3001';
+}
+
 /**
  * Connect to the WebSocket server
  * @param orgId - The organization ID to join the org room
  */
 export function connectSocket(orgId: string): Socket {
-  const wsUrl = typeof window !== 'undefined'
-    ? process.env['NEXT_PUBLIC_WS_URL'] ?? 'ws://localhost:3001'
-    : 'ws://localhost:3001';
+  const wsUrl = getWsUrl();
 
   // Disconnect existing connection
   if (socket?.connected) {

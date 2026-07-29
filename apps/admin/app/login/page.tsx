@@ -8,7 +8,16 @@ import { useLogin, tokenStorage } from "@repo/api-client";
 import { useUIStore } from "@/lib/use-ui-store";
 import { toast } from "sonner";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.unite-attendance.com";
+const getApiBaseUrl = () => {
+  if (typeof window !== "undefined") {
+    const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+    if (!isLocal) {
+      const envUrl = process.env.NEXT_PUBLIC_API_URL;
+      return envUrl && !envUrl.includes("localhost") ? envUrl : "https://api.unite-attendance.com";
+    }
+  }
+  return process.env.NEXT_PUBLIC_API_URL || "https://api.unite-attendance.com";
+};
 
 export default function LoginPage() {
   const router = useRouter();
@@ -85,7 +94,7 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = `${API_BASE_URL}/auth/google?state=admin`;
+    window.location.href = `${getApiBaseUrl()}/auth/google?state=admin`;
   };
 
   const handleQuickFill = (demoEmail: string) => {
