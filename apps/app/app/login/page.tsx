@@ -94,7 +94,7 @@ export default function AppLoginPage() {
             <div className="p-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-500 w-fit mx-auto">
               <Smartphone className="h-6 w-6" />
             </div>
-            <h1 className="text-xl font-black tracking-tight text-zinc-900 dark:text-white">Access Digital Pass</h1>
+            <h1 className="text-xl font-black tracking-tight text-zinc-900 dark:text-white">Member App</h1>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-xs mx-auto font-medium">
               Enter your Institution Email or Member ID to generate live TOTP attendance QR codes.
             </p>
