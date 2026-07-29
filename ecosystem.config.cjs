@@ -21,7 +21,7 @@ module.exports = {
     {
       name: "admin",
       cwd: "./apps/admin",
-      script: "node_modules/.bin/next",
+      script: "node_modules/next/dist/bin/next",
       args: "start --port 3002",
       instances: 1,
       exec_mode: "fork",
@@ -36,7 +36,7 @@ module.exports = {
     {
       name: "kiosk",
       cwd: "./apps/kiosk",
-      script: "node_modules/.bin/next",
+      script: "node_modules/next/dist/bin/next",
       args: "start --port 3003",
       instances: 1,
       exec_mode: "fork",
@@ -51,7 +51,7 @@ module.exports = {
     {
       name: "app",
       cwd: "./apps/app",
-      script: "node_modules/.bin/next",
+      script: "node_modules/next/dist/bin/next",
       args: "start --port 3004",
       instances: 1,
       exec_mode: "fork",
