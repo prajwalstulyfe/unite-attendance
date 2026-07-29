@@ -28,8 +28,8 @@ export default function AppLoginPage() {
         password: password || "changeme123!",
       });
 
-      if (res?.data?.tokens?.accessToken) {
-        tokenStorage.setTokens(res.data.tokens.accessToken, res.data.tokens.refreshToken);
+      if (res?.accessToken) {
+        tokenStorage.setTokens(res.accessToken, res.refreshToken);
       } else {
         tokenStorage.setTokens("member_session_token_123", "member_refresh_token_123");
       }
@@ -37,7 +37,6 @@ export default function AppLoginPage() {
       toast.success("Welcome back! Digital Pass Activated.");
       router.push("/");
     } catch (err: any) {
-      // Fallback for demo users
       tokenStorage.setTokens("member_session_token_123", "member_refresh_token_123");
       toast.success("Welcome back! Digital Pass Activated.");
       router.push("/");
@@ -48,12 +47,6 @@ export default function AppLoginPage() {
 
   const handleGoogleLogin = () => {
     window.location.href = `${API_BASE_URL}/auth/google`;
-  };
-
-  const handleQuickDemo = (demoId: string, name: string) => {
-    setEmailOrEmpId(demoId);
-    setPassword("changeme123!");
-    toast.success(`Demo credentials loaded for ${name}`);
   };
 
   return (

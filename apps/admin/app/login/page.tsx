@@ -62,13 +62,13 @@ export default function LoginPage() {
 
     try {
       const res = await loginMutation.mutateAsync({ email, password });
-      if (res?.data?.tokens?.accessToken) {
-        tokenStorage.setTokens(res.data.tokens.accessToken, res.data.tokens.refreshToken);
+      if (res?.accessToken) {
+        tokenStorage.setTokens(res.accessToken, res.refreshToken);
       } else {
         tokenStorage.setTokens("session_authenticated_token", "session_refresh_token");
       }
 
-      if (res?.data?.user?.globalRole === "super_admin" || isSuperAdminEmail) {
+      if (res?.user?.globalRole === "super_admin" || isSuperAdminEmail) {
         setIsSuperAdminUser(true);
         setPortalMode("SUPER");
         toast.success("Super Admin Login successful!");
