@@ -12,6 +12,11 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: "Unite Attendance - Attendance Made Simple",
   description: "Scalable, Secure, and Seamless Attendance Management for Educational Institutions and Organizations.",
+  icons: {
+    icon: "/uniteIcon.png",
+    shortcut: "/uniteIcon.png",
+    apple: "/uniteIcon.png",
+  },
 };
 
 export default function RootLayout({
