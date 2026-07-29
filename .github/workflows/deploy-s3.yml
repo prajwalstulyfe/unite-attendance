@@ -13,6 +13,9 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    env:
+      S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+      CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
 
     steps:
       - name: Checkout Repository
@@ -44,8 +47,8 @@ jobs:
 
       - name: Sync static files to AWS S3
         run: |
-          aws s3 sync apps/web/out s3://${{ secrets.S3_BUCKET_NAME || 'unite-attendance' }} --delete
+          aws s3 sync apps/web/out s3://$S3_BUCKET_NAME --delete
 
       - name: Invalidate CloudFront cache
         run: |
-          aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID || 'E2TL9KPGA9YP0K' }} --paths "/*"
+          aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths "/*"
