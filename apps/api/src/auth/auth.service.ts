@@ -61,7 +61,20 @@ export class AuthService {
     }
 
     const tokens = await this.generateTokens(user.id, user.email, user.globalRole);
+    const organizations = user.orgMemberships.map((m) => ({
+      orgId: m.organization.id,
+      orgName: m.organization.name,
+      orgSlug: m.organization.slug,
+      orgLogo: m.organization.logo,
+      role: m.role,
+      memberId: m.id,
+      departmentName: m.department?.name || null,
+      branchName: m.branch?.name || null,
+    }));
+
     return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
       tokens,
       user: {
         id: user.id,
@@ -70,6 +83,7 @@ export class AuthService {
         globalRole: user.globalRole,
         orgMemberships: user.orgMemberships,
       },
+      organizations,
     };
   }
 
