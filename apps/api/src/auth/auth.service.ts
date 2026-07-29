@@ -60,30 +60,15 @@ export class AuthService {
     }
 
     const tokens = await this.generateTokens(user.id, user.email, user.globalRole);
-
     return {
+      tokens,
       user: {
         id: user.id,
         email: user.email,
         name: user.name,
-        avatarUrl: user.avatarUrl,
         globalRole: user.globalRole,
-        isActive: user.isActive,
-        createdAt: user.createdAt.toISOString(),
-        updatedAt: user.updatedAt.toISOString(),
+        orgMemberships: user.orgMemberships,
       },
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-      organizations: user.orgMemberships.map((m) => ({
-        orgId: m.organization.id,
-        orgName: m.organization.name,
-        orgSlug: m.organization.slug,
-        orgLogo: m.organization.logo,
-        role: m.role,
-        memberId: m.id,
-        departmentName: m.department?.name || null,
-        branchName: m.branch?.name || null,
-      })),
     };
   }
 
@@ -93,8 +78,16 @@ export class AuthService {
         secret: process.env['JWT_REFRESH_SECRET'] || 'your-refresh-secret-min-32-chars-long',
       });
 
-      const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
-      if (!user || !user.isActive) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: payload.sub },
+      });
+
+      if (!user || !user.refreshToken) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      const isMatch = await bcrypt.compare(dto.refreshToken, user.refreshToken);
+      if (!isMatch) {
         throw new UnauthorizedException('Invalid refresh token');
       }
 
@@ -147,7 +140,7 @@ export class AuthService {
   }
 
   async validateGoogleUser(googleUser: { email: string; firstName: string; lastName: string }) {
-    let user = await this.prisma.user.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { email: googleUser.email.toLowerCase() },
       include: {
         orgMemberships: {
@@ -161,22 +154,15 @@ export class AuthService {
     });
 
     if (!user) {
-      user = await this.prisma.user.create({
-        data: {
-          email: googleUser.email.toLowerCase(),
-          name: `${googleUser.firstName} ${googleUser.lastName}`.trim() || 'Google User',
-          passwordHash: null,
-        },
-        include: {
-          orgMemberships: {
-            include: {
-              organization: true,
-              department: true,
-              branch: true,
-            },
-          },
-        },
-      });
+      throw new UnauthorizedException(
+        `No account found for ${googleUser.email}. Please register your organization first.`
+      );
+    }
+
+    if (user.globalRole !== 'super_admin' && user.orgMemberships.length === 0) {
+      throw new UnauthorizedException(
+        `Account ${googleUser.email} is not linked to any active organization.`
+      );
     }
 
     return this.generateTokens(user.id, user.email, user.globalRole);
