@@ -21,16 +21,27 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const isLocal =
-      typeof window !== "undefined" &&
-      (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+    if (typeof window === "undefined") return;
 
+    // Check for Google OAuth callback tokens in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get("token");
+    const refresh = urlParams.get("refresh");
+
+    if (token && refresh) {
+      tokenStorage.setTokens(token, refresh);
+      toast.success("Google Sign-In successful!");
+      router.push("/dashboard");
+      return;
+    }
+
+    const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
     setIsLocalhost(isLocal);
     if (isLocal) {
       setEmail("admin@unite-attendance.com");
       setPassword("changeme123!");
     }
-  }, []);
+  }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

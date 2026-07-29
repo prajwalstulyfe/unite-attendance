@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, Mail, ArrowRight, ShieldCheck, Smartphone } from "lucide-react";
 import { toast } from "sonner";
@@ -15,6 +15,21 @@ export default function AppLoginPage() {
   const [emailOrEmpId, setEmailOrEmpId] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // Check for Google OAuth callback tokens in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get("token");
+    const refresh = urlParams.get("refresh");
+
+    if (token && refresh) {
+      tokenStorage.setTokens(token, refresh);
+      toast.success("Welcome back! Digital Pass Activated.");
+      router.push("/");
+    }
+  }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
