@@ -47,10 +47,11 @@ export class AuthController {
     const appUrl = process.env['NEXT_PUBLIC_APP_URL'] || 'https://app.unite-attendance.com';
     const state = req.query?.state || '';
     const referer = req.headers?.referer || '';
-    const frontendUrl = (state.includes('admin') || referer.includes('admin')) ? adminUrl : appUrl;
+    const isAdmin = state.includes('admin') || referer.includes('admin');
+    const frontendUrl = isAdmin ? adminUrl : appUrl;
 
     try {
-      const tokens = await this.authService.validateGoogleUser(req.user);
+      const tokens = await this.authService.validateGoogleUser(req.user, !isAdmin);
       return res.redirect(`${frontendUrl}/login?token=${tokens.accessToken}&refresh=${tokens.refreshToken}`);
     } catch (err: any) {
       const errorMsg = encodeURIComponent(err.message || 'Google Authentication Failed');
