@@ -44,9 +44,10 @@ export default function LoginPage() {
 
     const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
     setIsLocalhost(isLocal);
-    if (isLocal) {
-      setEmail("admin@unite-attendance.com");
-      setPassword("changeme123!");
+
+    // If landing on login without token search params, ensure session/tokens are cleared
+    if (!token && !refresh) {
+      tokenStorage.clear();
     }
   }, [router]);
 

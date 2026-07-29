@@ -13,26 +13,31 @@ const mockOrganizationsList = [
   { name: "Global Logistics Ltd", slug: "global-logistics" },
 ];
 
+import { useSession } from "@repo/api-client";
+
 export function TopBar() {
   const { theme, setTheme } = useTheme();
+  const { data: session } = useSession();
   const [mounted, setMounted] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showOrgDropdown, setShowOrgDropdown] = useState(false);
   const { activeOrgName, activeOrgSlug, setActiveOrg, portalMode } = useUIStore();
 
+  const userOrgs = session?.organizations?.map((o) => ({
+    name: o.orgName,
+    slug: o.orgSlug || o.orgId,
+  })) || [
+    { name: "My Organization", slug: "my-org" },
+  ];
+
   useEffect(() => {
     setMounted(true);
+    if (session?.organizations?.[0] && activeOrgName === "Acme Corporation") {
+      setActiveOrg(session.organizations[0].orgName, session.organizations[0].orgSlug || session.organizations[0].orgId);
+    }
+  }, [session, activeOrgName, setActiveOrg]);
 
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-
-    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-    };
-  }, []);
+  const orgsList = userOrgs.length > 0 ? userOrgs : mockOrganizationsList;
 
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
@@ -77,7 +82,7 @@ export function TopBar() {
               <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
                 Switch Organization Workspace
               </div>
-              {mockOrganizationsList.map((org) => (
+              {orgsList.map((org) => (
                 <button
                   key={org.slug}
                   onClick={() => handleSelectOrg(org.name, org.slug)}

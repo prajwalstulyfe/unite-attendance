@@ -34,6 +34,8 @@ export default function AppLoginPage() {
       tokenStorage.setTokens(token, refresh);
       toast.success("Welcome back! Digital Pass Activated.");
       router.push("/");
+    } else {
+      tokenStorage.clear();
     }
   }, [router]);
 

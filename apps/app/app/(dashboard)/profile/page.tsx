@@ -1,22 +1,43 @@
 "use client";
 
-import { ShieldCheck, Building2, Download, LogOut, QrCode, CheckCircle2, ChevronRight, Sparkles, Award, KeyRound, Smartphone, Lock } from "lucide-react";
+import { ShieldCheck, Building2, Download, LogOut, QrCode, CheckCircle2, ChevronRight, Sparkles, Award, KeyRound, Smartphone, Lock, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { PwaInstallButton } from "@/components/pwa-install-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { toast } from "sonner";
-
-import { useRouter } from "next/navigation";
-import { tokenStorage } from "@repo/api-client";
+import { useSession, useLogout, tokenStorage } from "@repo/api-client";
 
 export default function ProfilePage() {
-  const router = useRouter();
+  const { data: session, isLoading } = useSession();
+  const logoutMutation = useLogout();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await logoutMutation.mutateAsync();
+    } catch {
+      // Ignore API error on stale token
+    }
     tokenStorage.clear();
     toast.info("Logged out of Employee Pass");
-    router.push("/login");
+    window.location.href = "/login";
   };
+
+  const user = session?.user;
+  const primaryOrg = session?.organizations?.[0];
+
+  const userName = user?.name || user?.email?.split("@")[0] || "Member";
+  const userEmail = user?.email || "member@organization.com";
+  const userInitials = userName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  const orgName = primaryOrg?.orgName || "Unite Attendance";
+  const departmentName = primaryOrg?.departmentName || "General";
+  const branchName = primaryOrg?.branchName || "";
+  const empId = primaryOrg?.memberId || `EMP-${user?.id?.slice(0, 6).toUpperCase() || "101"}`;
 
   return (
     <div className="space-y-4 max-w-sm mx-auto">
@@ -44,7 +65,7 @@ export default function ProfilePage() {
               className="h-7 w-7 rounded-xl object-cover border border-purple-500/20"
             />
             <div>
-              <p className="text-xs font-extrabold tracking-wide uppercase text-zinc-900 dark:text-white">Acme Corporation</p>
+              <p className="text-xs font-extrabold tracking-wide uppercase text-zinc-900 dark:text-white">{orgName}</p>
               <p className="text-[9px] text-zinc-500">Official Digital Access Pass</p>
             </div>
           </div>
@@ -57,17 +78,17 @@ export default function ProfilePage() {
         <div className="flex items-center gap-4 relative z-10">
           <div className="relative">
             <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 border-2 border-indigo-400/30 flex items-center justify-center font-black text-white text-2xl shadow-lg shadow-indigo-500/20">
-              JS
+              {userInitials}
             </div>
             <div className="absolute -bottom-1 -right-1 h-5 w-5 bg-emerald-400 border-2 border-white dark:border-zinc-900 rounded-full flex items-center justify-center">
               <CheckCircle2 className="h-3.5 w-3.5 text-white" />
             </div>
           </div>
 
-          <div className="space-y-0.5">
-            <h2 className="text-lg font-black tracking-tight text-zinc-900 dark:text-white">Jane Smith</h2>
-            <p className="text-xs text-zinc-500 font-medium">EMP-102 • Engineering Wing A</p>
-            <p className="text-[10px] text-zinc-400 font-mono">ID: ACME-2024-8902-X</p>
+          <div className="space-y-0.5 min-w-0 flex-1">
+            <h2 className="text-lg font-black tracking-tight text-zinc-900 dark:text-white truncate">{userName}</h2>
+            <p className="text-xs text-zinc-500 font-medium truncate">{empId} • {departmentName} {branchName ? `(${branchName})` : ''}</p>
+            <p className="text-[10px] text-zinc-400 font-mono truncate">{userEmail}</p>
           </div>
         </div>
 

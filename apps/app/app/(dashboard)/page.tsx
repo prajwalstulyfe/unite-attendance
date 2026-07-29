@@ -1,33 +1,59 @@
 "use client";
 
 import Link from "next/link";
-import { CheckCircle2, QrCode, Clock, ArrowRight, Calendar, Sparkles, ShieldCheck, Award, Zap, Briefcase } from "lucide-react";
+import { CheckCircle2, QrCode, Clock, ArrowRight, Calendar, Sparkles, ShieldCheck, Award, Zap, Briefcase, AlertCircle } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
-
-const weeklySummary = [
-  { day: "Mon", status: "present" },
-  { day: "Tue", status: "present" },
-  { day: "Wed", status: "late" },
-  { day: "Thu", status: "present" },
-  { day: "Fri", status: "today" },
-  { day: "Sat", status: "weekend" },
-  { day: "Sun", status: "weekend" },
-];
+import { useSession, useMemberAttendance } from "@repo/api-client";
 
 export default function MemberHomePage() {
+  const { data: session } = useSession();
+  const user = session?.user;
+  const primaryOrg = session?.organizations?.[0];
+
+  const orgId = primaryOrg?.orgId || "";
+  const memberId = primaryOrg?.memberId || user?.id || "";
+
+  const { data: attendanceSummary } = useMemberAttendance(orgId, memberId);
+
+  const userName = user?.name || user?.email?.split("@")[0] || "Member";
+  const userInitials = userName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  const orgName = primaryOrg?.orgName || "Organization";
+  const departmentName = primaryOrg?.departmentName || "General";
+  const empId = primaryOrg?.memberId || `EMP-${user?.id?.slice(0, 6).toUpperCase() || "101"}`;
+
+  // Process today's attendance record if present in summary
+  const records = attendanceSummary?.records || [];
+  const todayStr: string = new Date().toISOString().split("T")[0] || "";
+  const todayRecord = records.find((r) => r.date === todayStr || (typeof r.checkInTime === "string" && r.checkInTime.startsWith(todayStr))) || (records.length > 0 ? records[0] : null);
+
+  const isCheckedIn = !!(todayRecord && todayRecord.checkInTime);
+  const checkInTime = todayRecord?.checkInTime
+    ? new Date(todayRecord.checkInTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    : null;
+
+  const totalPresent = attendanceSummary?.daysPresent ?? (records.filter((r) => r.status === "present").length);
+  const totalLate = attendanceSummary?.daysLate ?? (records.filter((r) => r.status === "late").length);
+  const punctualityRate = records.length > 0 ? Math.round(((records.length - totalLate) / records.length) * 100) : 100;
+
   return (
     <div className="space-y-4 max-w-sm mx-auto">
       {/* Top Mobile Header — Glassmorphic Card */}
       <div className="flex items-center justify-between p-3.5 rounded-3xl bg-white/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-zinc-200 dark:border-zinc-800 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-white text-base shadow-lg shadow-indigo-500/20">
-            JS
+            {userInitials}
           </div>
           <div>
             <h1 className="text-sm font-extrabold text-zinc-900 dark:text-white tracking-tight flex items-center gap-1.5">
-              Good Morning, Jane! <Sparkles className="h-4 w-4 text-amber-400" />
+              Welcome, {userName}! <Sparkles className="h-4 w-4 text-amber-400" />
             </h1>
-            <p className="text-[11px] text-zinc-500">EMP-102 • Engineering (Acme Corp)</p>
+            <p className="text-[11px] text-zinc-500">{empId} • {departmentName} ({orgName})</p>
           </div>
         </div>
         <ThemeToggle />
@@ -42,26 +68,47 @@ export default function MemberHomePage() {
       <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 shadow-2xl shadow-indigo-500/10 dark:shadow-indigo-500/20 space-y-4">
         <div className="flex items-start justify-between">
           <div>
-            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">Today's Attendance</span>
+            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">
+              Today's Attendance
+            </span>
             <h2 className="text-lg font-extrabold text-zinc-900 dark:text-white mt-0.5 flex items-center gap-1.5">
-              <CheckCircle2 className="h-5 w-5 text-emerald-500" /> Checked In Verified
+              {isCheckedIn ? (
+                <>
+                  <CheckCircle2 className="h-5 w-5 text-emerald-500" /> Checked In Verified
+                </>
+              ) : (
+                <>
+                  <AlertCircle className="h-5 w-5 text-amber-500" /> Not Checked In Yet
+                </>
+              )}
             </h2>
-            <p className="text-xs text-zinc-500 mt-1 font-medium">09:02 AM • Main HQ North Gate</p>
+            <p className="text-xs text-zinc-500 mt-1 font-medium">
+              {isCheckedIn ? `${checkInTime} • Verified Gate Entry` : "Scan your QR pass at terminal to check in"}
+            </p>
           </div>
-          <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-500 text-white shadow-md shadow-emerald-500/30">
-            PRESENT
+          <span
+            className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold shadow-md ${
+              isCheckedIn
+                ? "bg-emerald-500 text-white shadow-emerald-500/30"
+                : "bg-amber-500 text-white shadow-amber-500/30"
+            }`}
+          >
+            {isCheckedIn ? "PRESENT" : "PENDING"}
           </span>
         </div>
 
         <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-xs text-zinc-600 dark:text-zinc-400">
           <span className="flex items-center gap-1.5 font-mono font-medium">
-            <Clock className="h-4 w-4 text-emerald-500" /> Active: <strong className="text-zinc-900 dark:text-white">3h 45m</strong>
+            <Clock className="h-4 w-4 text-emerald-500" /> Status:{" "}
+            <strong className="text-zinc-900 dark:text-white">
+              {isCheckedIn ? "Active Session" : "Awaiting Scan"}
+            </strong>
           </span>
-          <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Shift: 09:00 - 18:00</span>
+          <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Standard Shift</span>
         </div>
       </div>
 
-      {/* Show Digital QR Pass Banner — Outlined Glassmorphic */}
+      {/* Show Digital QR Pass Banner */}
       <Link
         href="/qr"
         className="flex items-center justify-between p-4 rounded-3xl bg-white/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-indigo-200 dark:border-indigo-500/30 hover:border-indigo-400 dark:hover:border-indigo-400/50 hover:bg-indigo-50/50 dark:hover:bg-indigo-500/5 shadow-sm transition-all group"
@@ -85,19 +132,19 @@ export default function MemberHomePage() {
             <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Punctuality</span>
             <Award className="h-4 w-4 text-indigo-500" />
           </div>
-          <p className="text-xl font-extrabold text-zinc-900 dark:text-white">98.4%</p>
+          <p className="text-xl font-extrabold text-zinc-900 dark:text-white">{punctualityRate}%</p>
           <div className="w-full h-1 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden mt-1">
-            <div className="h-full bg-emerald-500 rounded-full w-[98%]" />
+            <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${punctualityRate}%` }} />
           </div>
         </div>
 
         <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-4 shadow-sm space-y-1">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Hours Worked</span>
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Days Present</span>
             <Zap className="h-4 w-4 text-amber-500" />
           </div>
-          <p className="text-xl font-extrabold text-zinc-900 dark:text-white">148.5h</p>
-          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold block">+12.4h vs target</span>
+          <p className="text-xl font-extrabold text-zinc-900 dark:text-white">{totalPresent} Days</p>
+          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold block">Monthly total</span>
         </div>
 
         <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-4 shadow-sm space-y-1">
@@ -106,7 +153,7 @@ export default function MemberHomePage() {
             <Briefcase className="h-4 w-4 text-emerald-500" />
           </div>
           <p className="text-xl font-extrabold text-zinc-900 dark:text-white">12 Days</p>
-          <span className="text-[10px] text-zinc-500 block">Earned Leave Balance</span>
+          <span className="text-[10px] text-zinc-500 block">Earned Balance</span>
         </div>
 
         <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-4 shadow-sm space-y-1">
@@ -114,38 +161,8 @@ export default function MemberHomePage() {
             <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Late Scans</span>
             <Clock className="h-4 w-4 text-rose-500" />
           </div>
-          <p className="text-xl font-extrabold text-zinc-900 dark:text-white">1 Day</p>
-          <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold block">+18m grace used</span>
-        </div>
-      </div>
-
-      {/* Weekly Pass Summary Card */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-4 shadow-sm space-y-2.5">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-            <Calendar className="h-3.5 w-3.5 text-indigo-500" /> Weekly Pass Summary
-          </h3>
-          <span className="text-xs text-indigo-600 dark:text-indigo-400 font-bold">5 / 5 Verified</span>
-        </div>
-
-        <div className="grid grid-cols-7 gap-1.5 text-center">
-          {weeklySummary.map((item) => (
-            <div
-              key={item.day}
-              className={`p-2 rounded-2xl border flex flex-col items-center gap-1 transition-all ${
-                item.status === "present"
-                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
-                  : item.status === "late"
-                  ? "bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400"
-                  : item.status === "today"
-                  ? "bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/30"
-                  : "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-400"
-              }`}
-            >
-              <span className="text-[10px] font-extrabold">{item.day}</span>
-              <span className="text-xs font-bold">{item.status === "weekend" ? "-" : "✓"}</span>
-            </div>
-          ))}
+          <p className="text-xl font-extrabold text-zinc-900 dark:text-white">{totalLate} {totalLate === 1 ? "Day" : "Days"}</p>
+          <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold block">Total recorded</span>
         </div>
       </div>
     </div>

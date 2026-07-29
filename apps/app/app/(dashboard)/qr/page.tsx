@@ -4,8 +4,17 @@ import { useState, useEffect } from "react";
 import { QRDisplay } from "@repo/ui";
 import { ShieldCheck, RefreshCw, Smartphone } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useSession } from "@repo/api-client";
 
 export default function MemberQRPage() {
+  const { data: session } = useSession();
+  const user = session?.user;
+  const primaryOrg = session?.organizations?.[0];
+
+  const userName = user?.name || user?.email?.split("@")[0] || "Member";
+  const empId = primaryOrg?.memberId || `EMP-${user?.id?.slice(0, 6).toUpperCase() || "101"}`;
+  const departmentName = `${primaryOrg?.departmentName || "General"} • ${primaryOrg?.orgName || "Unite Attendance"}`;
+
   const [secondsRemaining, setSecondsRemaining] = useState(30);
   const [tokenCounter, setTokenCounter] = useState(1);
 
@@ -22,8 +31,8 @@ export default function MemberQRPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // Stable 30-second TOTP token (refreshes ONLY when the 30s timer expires)
-  const dynamicToken = `UNITE_TOTP_EMP102_AUTH_KEY_${tokenCounter}`;
+  // Stable 30-second TOTP token with real member ID
+  const dynamicToken = `UNITE_TOTP_${user?.id || "USER"}_${empId}_${tokenCounter}`;
 
   return (
     <div className="space-y-5 max-w-sm mx-auto">
@@ -46,9 +55,9 @@ export default function MemberQRPage() {
         {/* Real Dynamic QR Barcode Display (Stable 30s TOTP) */}
         <QRDisplay
           qrToken={dynamicToken}
-          memberName="Jane Smith"
-          employeeId="EMP-102"
-          departmentName="Engineering • Acme Corp"
+          memberName={userName}
+          employeeId={empId}
+          departmentName={departmentName}
           size={190}
         />
 

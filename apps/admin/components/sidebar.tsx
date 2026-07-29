@@ -47,21 +47,25 @@ export function Sidebar({ orgId = "acme-corp", isSuperAdmin = false }: SidebarPr
     (currentUser?.globalRole as string) === "SUPER_ADMIN" ||
     currentUser?.email === "admin@unite-attendance.com";
 
-  const userName = isSuperUser ? "Super Admin" : (currentUser?.name ?? "Acme Admin");
+  const userName = isSuperUser ? "Super Admin" : (currentUser?.name ?? "Admin User");
   const userInitials = userName
     .split(" ")
     .map((n) => n[0])
     .join("")
     .slice(0, 2)
     .toUpperCase();
-  const userEmail = isSuperUser ? "admin@unite-attendance.com" : (currentUser?.email ?? "admin@acme.com");
+  const userEmail = isSuperUser ? "admin@unite-attendance.com" : (currentUser?.email ?? "admin@organization.com");
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await logoutMutation.mutateAsync();
+    } catch {
+      // Ignore API logout error if already expired
+    }
     tokenStorage.clear();
     setIsSuperAdminUser(false);
-    logoutMutation.mutate();
     toast.success("Logged out successfully");
-    router.push("/login");
+    window.location.href = "/login";
   };
 
   const handleToggleMode = () => {
