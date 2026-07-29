@@ -2,8 +2,10 @@
   "name": "unite-attendance",
   "private": true,
   "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev",
+    "sync-assets": "node scripts/sync-assets.mjs",
+    "prepare": "node scripts/sync-assets.mjs",
+    "build": "node scripts/sync-assets.mjs && turbo run build",
+    "dev": "node scripts/sync-assets.mjs && turbo run dev",
     "dev:api": "turbo run dev --filter=api",
     "dev:admin": "turbo run dev --filter=admin",
     "dev:kiosk": "turbo run dev --filter=kiosk",
