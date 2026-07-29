@@ -4,10 +4,38 @@ import * as bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Starting database seed...');
+  console.log('🌱 Starting database cleanup & seed...');
 
+  // Clean up any extra dummy users/members to ensure ONLY the 3 requested accounts exist
   const superAdminEmail = process.env['SUPER_ADMIN_EMAIL'] || 'admin@unite-attendance.com';
   const superAdminPassword = process.env['SUPER_ADMIN_PASSWORD'] || 'changeme123!';
+
+  const allowedEmails = [
+    superAdminEmail.toLowerCase(),
+    'john@acme.com',
+    'jane@acme.com',
+  ];
+
+  // Delete attendance records, QR codes, members, and users not in allowedEmails
+  await prisma.attendanceRecord.deleteMany({});
+  await prisma.qRCode.deleteMany({});
+  await prisma.orgMember.deleteMany({
+    where: {
+      user: {
+        email: {
+          notIn: allowedEmails,
+        },
+      },
+    },
+  });
+  await prisma.user.deleteMany({
+    where: {
+      email: {
+        notIn: allowedEmails,
+      },
+    },
+  });
+  console.log('🧹 Cleaned up non-essential database records.');
 
   // 1. Create Super Admin User
   const passwordHash = await bcrypt.hash(superAdminPassword, 10);
@@ -64,62 +92,41 @@ async function main() {
     },
   });
 
-  // 4. Create Main Branch
-  const mainBranch = await prisma.branch.create({
-    data: {
-      orgId: demoOrg.id,
-      name: 'HQ — Bengaluru',
-      address: 'Indiranagar 100ft Road, Bengaluru, KA 560038',
-      location: { lat: 12.9716, lng: 77.5946, radiusMeters: 300 },
-    },
-  });
+  // 4. Create Main Branch if needed
+  let mainBranch = await prisma.branch.findFirst({ where: { orgId: demoOrg.id } });
+  if (!mainBranch) {
+    mainBranch = await prisma.branch.create({
+      data: {
+        orgId: demoOrg.id,
+        name: 'HQ — Bengaluru',
+        address: 'Indiranagar 100ft Road, Bengaluru, KA 560038',
+        location: { lat: 12.9716, lng: 77.5946, radiusMeters: 300 },
+      },
+    });
+  }
 
-  // 5. Create Departments
-  const engineeringDept = await prisma.department.create({
-    data: {
-      orgId: demoOrg.id,
-      branchId: mainBranch.id,
-      name: 'Engineering',
-    },
-  });
+  // 5. Create Departments if needed
+  let engineeringDept = await prisma.department.findFirst({ where: { orgId: demoOrg.id, name: 'Engineering' } });
+  if (!engineeringDept) {
+    engineeringDept = await prisma.department.create({
+      data: {
+        orgId: demoOrg.id,
+        branchId: mainBranch.id,
+        name: 'Engineering',
+      },
+    });
+  }
 
-  const hrDept = await prisma.department.create({
-    data: {
-      orgId: demoOrg.id,
-      branchId: mainBranch.id,
-      name: 'Human Resources',
-    },
-  });
-
-  // 6. Create Default Attendance Rule
-  await prisma.attendanceRule.create({
-    data: {
-      orgId: demoOrg.id,
-      name: 'Standard Shift (9 AM - 6 PM)',
-      workStart: '09:00',
-      workEnd: '18:00',
-      lateThresholdMin: 15,
-      halfDayThresholdMin: 240,
-      requireGps: false,
-      preventDuplicateMin: 5,
-      isDefault: true,
-      workingDays: ['mon', 'tue', 'wed', 'thu', 'fri'],
-    },
-  });
-  console.log('✅ Default Attendance Rule created');
-
-  // 7. Seed Demo Members
+  // 6. Seed ONLY the 2 requested org accounts (john@acme.com and jane@acme.com)
   const demoUsers = [
     { name: 'John Doe', email: 'john@acme.com', role: OrgRole.MANAGER, empId: 'EMP-101', deptId: engineeringDept.id },
     { name: 'Jane Smith', email: 'jane@acme.com', role: OrgRole.MEMBER, empId: 'EMP-102', deptId: engineeringDept.id },
-    { name: 'Alice Johnson', email: 'alice@acme.com', role: OrgRole.MEMBER, empId: 'EMP-103', deptId: hrDept.id },
-    { name: 'Bob Williams', email: 'bob@acme.com', role: OrgRole.MEMBER, empId: 'EMP-104', deptId: engineeringDept.id },
   ];
 
   for (const userSeed of demoUsers) {
     const user = await prisma.user.upsert({
       where: { email: userSeed.email },
-      update: {},
+      update: { passwordHash },
       create: {
         email: userSeed.email,
         name: userSeed.name,
@@ -134,7 +141,7 @@ async function main() {
           orgId: demoOrg.id,
         },
       },
-      update: {},
+      update: { role: userSeed.role },
       create: {
         userId: user.id,
         orgId: demoOrg.id,
@@ -145,7 +152,7 @@ async function main() {
       },
     });
 
-    // Create active QR token for each demo member
+    // Create active QR token for member
     await prisma.qRCode.create({
       data: {
         memberId: member.id,
@@ -157,8 +164,8 @@ async function main() {
     });
   }
 
-  console.log('✅ Demo Members & QR codes seeded successfully!');
-  console.log('🎉 Seed complete.');
+  console.log('✅ Kept ONLY 3 accounts: admin@unite-attendance.com, john@acme.com, jane@acme.com');
+  console.log('🎉 Cleanup & seed complete.');
 }
 
 main()

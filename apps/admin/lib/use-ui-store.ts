@@ -58,8 +58,8 @@ export const useUIStore = create<UIState>()(
   persist(
     (set) => ({
       portalMode: "ORG",
-      activeOrgName: "Acme Corporation",
-      activeOrgSlug: "acme-corp",
+      activeOrgName: "My Organization",
+      activeOrgSlug: "my-org",
       isSuperAdminUser: true,
       isSidebarCollapsed: false,
       membersMap: defaultMembersMap,

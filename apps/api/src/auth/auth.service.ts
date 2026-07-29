@@ -156,7 +156,7 @@ export class AuthService {
 
     if (!user) {
       throw new UnauthorizedException(
-        `No account found for ${googleUser.email}. Please register your organization first.`
+        `No account found for ${googleUser.email}. Access denied.`
       );
     }
 

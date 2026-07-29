@@ -73,7 +73,7 @@ export function TopBar() {
             className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/15 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs font-bold transition-all shadow-sm"
           >
             <Building2 className="h-4 w-4 text-indigo-500" />
-            <span className="max-w-[150px] sm:max-w-[200px] truncate">{mounted ? activeOrgName : "Acme Corporation"}</span>
+            <span className="max-w-[150px] sm:max-w-[200px] truncate">{mounted ? activeOrgName : "My Organization"}</span>
             <ChevronDown className="h-3.5 w-3.5 text-indigo-400" />
           </button>
 
