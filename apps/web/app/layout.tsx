@@ -1,21 +1,17 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { cn } from "@/lib/utils";
 
-const geistSans = Geist({
+const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  variable: "--font-geist-sans",
-});
-
-const geistMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--font-geist-mono",
+  variable: "--font-plus-jakarta",
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
-  title: "Unite Attendance",
-  description: "Attendance management platform",
+  title: "Unite Attendance - Attendance Made Simple",
+  description: "Scalable, Secure, and Seamless Attendance Management for Educational Institutions and Organizations.",
 };
 
 export default function RootLayout({
@@ -24,8 +20,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("font-sans", geistSans.variable)} suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} suppressHydrationWarning>
+    <html lang="en" className={cn(plusJakartaSans.variable)} suppressHydrationWarning>
+      <body className={`${plusJakartaSans.className} antialiased`} suppressHydrationWarning>
         {children}
       </body>
     </html>
