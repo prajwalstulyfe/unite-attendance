@@ -26,28 +26,28 @@ export function FaqSection() {
   ];
 
   return (
-    <section id="faq" className="py-20 px-6 md:px-12 bg-zinc-900/40 border-t border-zinc-800/80">
+    <section id="faq" className="py-20 px-6 md:px-12 bg-zinc-100/60 dark:bg-zinc-900/40 border-t border-zinc-200 dark:border-zinc-800/80 transition-colors">
       <div className="max-w-4xl mx-auto space-y-12">
         <div className="text-center space-y-3">
-          <span className="text-xs font-extrabold text-indigo-400 uppercase tracking-widest">Frequently Asked Questions</span>
-          <h2 className="text-3xl font-extrabold text-white tracking-tight">Got Questions? We Have Answers</h2>
+          <span className="text-xs font-extrabold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Frequently Asked Questions</span>
+          <h2 className="text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight">Got Questions? We Have Answers</h2>
         </div>
 
         <div className="space-y-4">
           {faqs.map((faq, idx) => (
-            <div key={idx} className="p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-2">
+            <div key={idx} className="p-5 rounded-2xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-2">
               <button
                 onClick={() => setActiveFaq(activeFaq === idx ? null : idx)}
-                className="w-full flex items-center justify-between text-left font-bold text-sm text-white"
+                className="w-full flex items-center justify-between text-left font-bold text-sm text-zinc-900 dark:text-white"
               >
                 <span className="flex items-center gap-2.5">
-                  <HelpCircle className="h-4 w-4 text-indigo-400 shrink-0" />
+                  <HelpCircle className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
                   {faq.q}
                 </span>
                 <ChevronDown className={`h-4 w-4 text-zinc-500 transition-transform ${activeFaq === idx ? "rotate-180" : ""}`} />
               </button>
               {activeFaq === idx && (
-                <p className="text-xs text-zinc-400 leading-relaxed font-medium pt-2 pl-6">
+                <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed font-medium pt-2 pl-6">
                   {faq.a}
                 </p>
               )}

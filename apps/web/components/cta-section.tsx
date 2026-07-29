@@ -7,12 +7,12 @@ export function CtaSection() {
   const urls = usePortalUrls();
 
   return (
-    <section className="py-20 px-6 md:px-12 bg-gradient-to-r from-indigo-900/30 via-zinc-950 to-purple-900/30 border-t border-zinc-800 text-center">
+    <section className="py-20 px-6 md:px-12 bg-gradient-to-r from-indigo-50 via-zinc-50 to-purple-50 dark:from-indigo-900/30 dark:via-zinc-950 dark:to-purple-900/30 border-t border-zinc-200 dark:border-zinc-800 text-center transition-colors">
       <div className="max-w-4xl mx-auto space-y-6">
-        <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
+        <h2 className="text-3xl sm:text-5xl font-black text-zinc-900 dark:text-white tracking-tight">
           Ready to Modernize Your Attendance?
         </h2>
-        <p className="text-sm text-zinc-400 max-w-xl mx-auto font-medium">
+        <p className="text-sm text-zinc-600 dark:text-zinc-400 max-w-xl mx-auto font-medium">
           Join hundreds of institutions replacing manual registers with Unite Attendance today.
         </p>
         <div className="pt-4 flex flex-col sm:flex-row gap-4 justify-center">
@@ -24,7 +24,7 @@ export function CtaSection() {
           </a>
           <a
             href={`${urls.admin}/login`}
-            className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-200 font-extrabold text-sm transition-all"
+            className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-white hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 font-extrabold text-sm shadow-sm transition-all"
           >
             Admin Portal Sign In
           </a>
