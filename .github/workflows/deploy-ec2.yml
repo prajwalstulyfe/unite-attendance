@@ -1,0 +1,34 @@
+name: Deploy Backend & Apps to AWS EC2
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - 'apps/api/**'
+      - 'apps/admin/**'
+      - 'apps/kiosk/**'
+      - 'apps/app/**'
+      - 'packages/**'
+      - 'ecosystem.config.cjs'
+      - '.github/workflows/deploy-ec2.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy-to-ec2:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/unite-attendance
+            git pull origin dev
+            pnpm install --no-frozen-lockfile
+            pnpm --filter api run db:generate
+            pnpm turbo build --filter=admin --filter=kiosk --filter=app --filter=api
+            pm2 reload all
