@@ -146,6 +146,42 @@ export class AuthService {
     };
   }
 
+  async validateGoogleUser(googleUser: { email: string; firstName: string; lastName: string }) {
+    let user = await this.prisma.user.findUnique({
+      where: { email: googleUser.email.toLowerCase() },
+      include: {
+        orgMemberships: {
+          include: {
+            organization: true,
+            department: true,
+            branch: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      user = await this.prisma.user.create({
+        data: {
+          email: googleUser.email.toLowerCase(),
+          name: `${googleUser.firstName} ${googleUser.lastName}`.trim() || 'Google User',
+          passwordHash: null,
+        },
+        include: {
+          orgMemberships: {
+            include: {
+              organization: true,
+              department: true,
+              branch: true,
+            },
+          },
+        },
+      });
+    }
+
+    return this.generateTokens(user.id, user.email, user.globalRole);
+  }
+
   private async generateTokens(userId: string, email: string, globalRole: string) {
     const payload = { sub: userId, email, globalRole };
 

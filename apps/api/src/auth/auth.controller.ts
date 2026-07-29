@@ -1,4 +1,5 @@
-import { Controller, Post, Get, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Get, Body, HttpCode, HttpStatus, UseGuards, Req, Res } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service.js';
 import { LoginDto, RegisterDto, RefreshTokenDto } from './dto/auth.dto.js';
 import { Public } from './decorators/public.decorator.js';
@@ -29,6 +30,22 @@ export class AuthController {
   async refresh(@Body() dto: RefreshTokenDto) {
     const data = await this.authService.refreshTokens(dto);
     return { success: true, data, timestamp: new Date().toISOString() };
+  }
+
+  @Public()
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  async googleAuth() {
+    // Triggers Google OAuth 2.0 flow redirect
+  }
+
+  @Public()
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  async googleAuthRedirect(@Req() req: any, @Res() res: any) {
+    const tokens = await this.authService.validateGoogleUser(req.user);
+    const frontendUrl = process.env['NEXT_PUBLIC_ADMIN_URL'] || 'https://admin.unite-attendance.com';
+    return res.redirect(`${frontendUrl}/login?token=${tokens.accessToken}&refresh=${tokens.refreshToken}`);
   }
 
   @Get('me')
