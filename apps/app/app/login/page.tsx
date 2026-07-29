@@ -19,10 +19,16 @@ export default function AppLoginPage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // Check for Google OAuth callback tokens in URL
+    // Check for Google OAuth callback tokens or errors in URL
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get("token");
     const refresh = urlParams.get("refresh");
+    const errorMsg = urlParams.get("error");
+
+    if (errorMsg) {
+      toast.error(decodeURIComponent(errorMsg));
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
 
     if (token && refresh) {
       tokenStorage.setTokens(token, refresh);
