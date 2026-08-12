@@ -224,10 +224,15 @@ export default function OrganizationsPage() {
                   onChange={(e) => setOverridePlan(e.target.value)}
                   className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-indigo-500 font-bold"
                 >
-                  <option value="FREE">14-Day Free Trial (Free)</option>
-                  <option value="STARTER">Starter Tier (10-50 Employees)</option>
-                  <option value="PRO">Pro Tier (51-200 Employees)</option>
-                  <option value="ENTERPRISE">Enterprise Plan (Unlimited)</option>
+                  <option value="FREE">14-Day Free Trial (₹0/mo)</option>
+                  <option value="STARTER_10">Starter 10 Pack (Up to 10 Employees • ₹375/mo)</option>
+                  <option value="STARTER_25">Starter 25 Pack (11–25 Employees • ₹749/mo)</option>
+                  <option value="BUSINESS_50">Business 50 Pack (26–50 Employees • ₹1,125/mo)</option>
+                  <option value="PRO_100">Pro Growth 100 Pack (51–100 Employees • ₹1,875/mo)</option>
+                  <option value="SCALE_200">Scale 200 Pack (101–200 Employees • ₹2,999/mo)</option>
+                  <option value="CORPORATE_500">Corporate 500 Pack (201–500 Employees • ₹5,249/mo)</option>
+                  <option value="ENTERPRISE_1000">Enterprise 1000 Pack (501–1,000 Employees • ₹8,999/mo)</option>
+                  <option value="ENTERPRISE">Custom Enterprise (1,001+ Employees)</option>
                 </select>
               </div>
 

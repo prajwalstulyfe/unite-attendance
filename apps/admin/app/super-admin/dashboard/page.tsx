@@ -36,39 +36,61 @@ export default function SuperAdminDashboardPage() {
         }))
       : [];
 
-  // Pricing per plan tier (INR / month)
-  const PLAN_PRICES: Record<string, number> = {
-    FREE: 0,
-    FREE_TRIAL: 0,
-    STARTER: 499,
-    PRO: 999,
-    ENTERPRISE: 2499,
+  // Employee Pack Tiers matching Organization Billing Settings
+  const getPackDetails = (planStr: string, members: number) => {
+    const p = String(planStr || "FREE").toUpperCase();
+    if (p.includes("ENTERPRISE_1000") || p === "ENTERPRISE" || members > 500) {
+      return { tierName: "Enterprise 1000 Pack", tierGroup: "ENTERPRISE", price: 8999, range: "501-1,000" };
+    }
+    if (p.includes("CORPORATE_500") || members > 200) {
+      return { tierName: "Corporate 500 Pack", tierGroup: "CORPORATE", price: 5249, range: "201-500" };
+    }
+    if (p.includes("SCALE_200") || members > 100) {
+      return { tierName: "Scale 200 Pack", tierGroup: "SCALE", price: 2999, range: "101-200" };
+    }
+    if (p.includes("PRO_100") || p === "PRO" || members > 50) {
+      return { tierName: "Pro Growth 100 Pack", tierGroup: "PRO", price: 1875, range: "51-100" };
+    }
+    if (p.includes("BUSINESS_50") || p === "BUSINESS" || members > 25) {
+      return { tierName: "Business 50 Pack", tierGroup: "BUSINESS", price: 1125, range: "26-50" };
+    }
+    if (p.includes("STARTER_25") || members > 10) {
+      return { tierName: "Starter 25 Pack", tierGroup: "STARTER", price: 749, range: "11-25" };
+    }
+    if (p.includes("STARTER_10") || p === "STARTER") {
+      return { tierName: "Starter 10 Pack", tierGroup: "STARTER", price: 375, range: "Up to 10" };
+    }
+    return { tierName: "14-Day Free Trial", tierGroup: "FREE", price: 0, range: "Free" };
   };
 
   let freeCount = 0;
   let starterCount = 0;
+  let businessCount = 0;
   let proCount = 0;
   let enterpriseCount = 0;
   let liveMrr = 0;
 
   recentOrgsList.forEach((org) => {
-    const p = org.plan;
-    if (p === "STARTER") starterCount++;
-    else if (p === "PRO") proCount++;
-    else if (p === "ENTERPRISE") enterpriseCount++;
+    const details = getPackDetails(org.plan, org.members);
+    if (details.tierGroup === "ENTERPRISE" || details.tierGroup === "CORPORATE") enterpriseCount++;
+    else if (details.tierGroup === "PRO" || details.tierGroup === "SCALE") proCount++;
+    else if (details.tierGroup === "BUSINESS") businessCount++;
+    else if (details.tierGroup === "STARTER") starterCount++;
     else freeCount++;
 
-    liveMrr += PLAN_PRICES[p] ?? 0;
+    liveMrr += details.price;
   });
 
-  const paidCount = starterCount + proCount + enterpriseCount;
+  const paidCount = starterCount + businessCount + proCount + enterpriseCount;
   const liveArr = liveMrr * 12;
 
-  const starterMrr = starterCount * 499;
-  const proMrr = proCount * 999;
-  const enterpriseMrr = enterpriseCount * 2499;
+  const starterMrr = starterCount * 562; // avg starter
+  const businessMrr = businessCount * 1125;
+  const proMrr = proCount * 2437; // avg pro & scale
+  const enterpriseMrr = enterpriseCount * 7124; // avg enterprise & corporate
 
   const starterPct = liveMrr > 0 ? Math.round((starterMrr / liveMrr) * 100) : 0;
+  const businessPct = liveMrr > 0 ? Math.round((businessMrr / liveMrr) * 100) : 0;
   const proPct = liveMrr > 0 ? Math.round((proMrr / liveMrr) * 100) : 0;
   const enterprisePct = liveMrr > 0 ? Math.round((enterpriseMrr / liveMrr) * 100) : 0;
   const avgPerUser = totalMembers > 0 ? Math.round(liveMrr / totalMembers) : 0;
@@ -141,29 +163,29 @@ export default function SuperAdminDashboardPage() {
           <div>
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 uppercase tracking-wide">
-                Plan Distribution Telemetry
+                Employee Pack Telemetry
               </span>
               <span className="text-xs text-zinc-400 font-medium">Updated Real-Time</span>
             </div>
-            <h3 className="text-lg font-black text-white mt-1">Platform Revenue & Trial Breakdown</h3>
+            <h3 className="text-lg font-black text-white mt-1">Platform Employee Pack Breakdown</h3>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-white/10 rounded-xl p-2.5 backdrop-blur-xs border border-white/10 text-center">
-              <p className="text-[10px] font-bold text-amber-300 uppercase">Free / Trial</p>
-              <p className="text-base font-black text-white mt-0.5">{freeCount} {freeCount === 1 ? 'Org' : 'Orgs'} <span className="text-[10px] text-zinc-400 font-normal block">(₹0 MRR)</span></p>
+              <p className="text-[10px] font-bold text-amber-300 uppercase">Starter Packs (1–25)</p>
+              <p className="text-base font-black text-white mt-0.5">{starterCount} {starterCount === 1 ? 'Org' : 'Orgs'} <span className="text-[10px] text-zinc-400 font-normal block">(₹375 - ₹749/mo)</span></p>
             </div>
             <div className="bg-white/10 rounded-xl p-2.5 backdrop-blur-xs border border-white/10 text-center">
-              <p className="text-[10px] font-bold text-indigo-300 uppercase">Starter Tier</p>
-              <p className="text-base font-black text-white mt-0.5">{starterCount} {starterCount === 1 ? 'Org' : 'Orgs'} <span className="text-[10px] text-emerald-400 font-bold block">{starterPct}% MRR</span></p>
+              <p className="text-[10px] font-bold text-indigo-300 uppercase">Business 50 (26–50)</p>
+              <p className="text-base font-black text-white mt-0.5">{businessCount} {businessCount === 1 ? 'Org' : 'Orgs'} <span className="text-[10px] text-emerald-400 font-bold block">₹1,125/mo</span></p>
             </div>
             <div className="bg-white/10 rounded-xl p-2.5 backdrop-blur-xs border border-white/10 text-center">
-              <p className="text-[10px] font-bold text-emerald-300 uppercase">Pro Growth Tier</p>
-              <p className="text-base font-black text-white mt-0.5">{proCount} {proCount === 1 ? 'Org' : 'Orgs'} <span className="text-[10px] text-emerald-400 font-bold block">{proPct}% MRR</span></p>
+              <p className="text-[10px] font-bold text-emerald-300 uppercase">Pro & Scale (51–200)</p>
+              <p className="text-base font-black text-white mt-0.5">{proCount} {proCount === 1 ? 'Org' : 'Orgs'} <span className="text-[10px] text-emerald-400 font-bold block">₹1,875 - ₹2,999/mo</span></p>
             </div>
             <div className="bg-white/10 rounded-xl p-2.5 backdrop-blur-xs border border-white/10 text-center">
-              <p className="text-[10px] font-bold text-purple-300 uppercase">Enterprise Tier</p>
-              <p className="text-base font-black text-white mt-0.5">{enterpriseCount} {enterpriseCount === 1 ? 'Org' : 'Orgs'} <span className="text-[10px] text-emerald-400 font-bold block">{enterprisePct}% MRR</span></p>
+              <p className="text-[10px] font-bold text-purple-300 uppercase">Enterprise (201+)</p>
+              <p className="text-base font-black text-white mt-0.5">{enterpriseCount} {enterpriseCount === 1 ? 'Org' : 'Orgs'} <span className="text-[10px] text-emerald-400 font-bold block">₹5,249+/mo</span></p>
             </div>
           </div>
         </div>
