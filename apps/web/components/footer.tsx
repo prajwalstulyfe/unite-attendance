@@ -12,7 +12,7 @@ export function Footer() {
       {/* Subtle Background Glow */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-160 h-40 bg-indigo-600/5 blur-[120px] pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto px-6 md:px-12 pt-16 pb-12 space-y-12 relative z-10">
+      <div className="max-w-6xl mx-auto px-6 pt-16 pb-12 space-y-12 relative z-10">
         {/* Main Grid — 5 Columns */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-12">
           {/* Column 1: Brand Info & Status (4 cols) */}

@@ -84,7 +84,7 @@ export function PricingSection() {
     <section
       id='pricing'
       className='py-20 px-6 md:px-12 bg-zinc-50 dark:bg-zinc-950 transition-colors relative overflow-hidden'>
-      <div className='max-w-7xl mx-auto space-y-12'>
+      <div className='max-w-6xl mx-auto space-y-12'>
         {/* Section Header */}
         <div className='text-center space-y-3 max-w-4xl mx-auto'>
           <div className='inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold shadow-sm'>

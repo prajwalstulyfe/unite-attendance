@@ -8,7 +8,7 @@ export function CtaSection() {
 
   return (
     <section className="py-20 px-6 md:px-12 bg-linear-to-r from-indigo-50 via-zinc-50 to-purple-50 dark:from-indigo-900/30 dark:via-zinc-950 dark:to-purple-900/30 border-t border-zinc-200 dark:border-zinc-800 text-center transition-colors">
-      <div className="max-w-7xl mx-auto space-y-5">
+      <div className="max-w-4xl mx-auto space-y-5">
         <h2 className="text-2xl sm:text-4xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
           Ready to Modernize Your Attendance?
         </h2>
