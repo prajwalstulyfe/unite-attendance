@@ -37,6 +37,14 @@ export class ScanAttendanceDto {
   @IsObject()
   @IsOptional()
   gpsLocation?: GeoLocationDto;
+
+  @IsString()
+  @IsOptional()
+  wifiBssid?: string;
+
+  @IsString()
+  @IsOptional()
+  wifiSsid?: string;
 }
 
 export class ManualAttendanceDto {

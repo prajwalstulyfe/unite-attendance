@@ -54,6 +54,8 @@ export class AttendanceService {
       rule,
       scanTime,
       gpsLocation: dto.gpsLocation,
+      wifiBssid: dto.wifiBssid,
+      wifiSsid: dto.wifiSsid,
     });
 
     // Determine method based on QR type or device info
@@ -90,6 +92,23 @@ export class AttendanceService {
       message: validation.message,
       errors: validation.errors,
     };
+  }
+
+  async scanBatch(dtos: ScanAttendanceDto[], scannedByUserId?: string) {
+    const results = [];
+    for (const dto of dtos) {
+      try {
+        const res = await this.scan(dto, scannedByUserId);
+        results.push(res);
+      } catch (err: any) {
+        results.push({
+          success: false,
+          error: err.message || 'Failed to process offline scan',
+          qrToken: dto.qrToken,
+        });
+      }
+    }
+    return { syncedCount: results.filter((r) => r.success).length, total: dtos.length, results };
   }
 
   async manual(orgId: string, dto: ManualAttendanceDto, adminUserId: string) {

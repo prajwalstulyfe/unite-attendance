@@ -17,6 +17,13 @@ export class AttendanceController {
     return { success: true, data, timestamp: new Date().toISOString() };
   }
 
+  @Public()
+  @Post('attendance/scan-batch')
+  async scanBatch(@Body() dtos: ScanAttendanceDto[]) {
+    const data = await this.attendanceService.scanBatch(dtos);
+    return { success: true, data, timestamp: new Date().toISOString() };
+  }
+
   @Post('organizations/:orgId/attendance/manual')
   @Roles(OrgRole.ORG_ADMIN, (OrgRole as any).BRANCH_MANAGER, (OrgRole as any).DEPT_HEAD)
   async manual(

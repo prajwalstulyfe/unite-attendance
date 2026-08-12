@@ -2,7 +2,7 @@
 // Unite Attendance — Organization Types
 // ═══════════════════════════════════════════════════════════════
 
-import type { Plan, DayOfWeek } from './enums';
+import type { Plan } from './enums';
 
 /** Organization entity */
 export interface Organization {

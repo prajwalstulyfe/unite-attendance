@@ -21,8 +21,10 @@ export class RulesEngineService {
     rule: AttendanceRule | null;
     scanTime: Date;
     gpsLocation?: GeoLocationDto;
+    wifiBssid?: string;
+    wifiSsid?: string;
   }): Promise<ScanValidationResult> {
-    const { member, orgId, rule, scanTime, gpsLocation } = params;
+    const { member, orgId, rule, scanTime, gpsLocation, wifiBssid, wifiSsid } = params;
     const errors: string[] = [];
 
     // 1. Check if member is active
@@ -62,6 +64,8 @@ export class RulesEngineService {
     const type: AttendanceType =
       lastScanToday?.type === 'CHECK_IN' ? 'CHECK_OUT' : 'CHECK_IN';
 
+    let customGpsMessage: string | null = null;
+
     // 4. GPS validation (Geofence radius check against rule locations & registered branches)
     if (rule?.requireGps || gpsLocation) {
       const allowedLocations: Array<{ lat: number; lng: number; radiusMeters?: number }> = [];
@@ -98,14 +102,34 @@ export class RulesEngineService {
       if (rule?.requireGps && !gpsLocation) {
         errors.push('GPS_REQUIRED');
       } else if (gpsLocation && allowedLocations.length > 0) {
+        let closestDist = Infinity;
         const inRange = allowedLocations.some((loc) => {
           const dist = this.haversineDistance(gpsLocation.lat, gpsLocation.lng, loc.lat, loc.lng);
+          if (dist < closestDist) closestDist = dist;
           return dist <= (loc.radiusMeters || 300);
         });
 
         if (!inRange && rule?.requireGps) {
           errors.push('OUT_OF_GPS_RANGE');
+          customGpsMessage = `Out of GPS geofence range (${Math.round(closestDist)}m from branch center)`;
         }
+      }
+    }
+
+    // 4.5. Wi-Fi validation (Corporate Wi-Fi SSID / BSSID verification)
+    const org = await this.prisma.organization.findUnique({
+      where: { id: orgId },
+      select: { settings: true },
+    });
+    const orgSettings = (org?.settings || {}) as Record<string, any>;
+    const allowedSsid = orgSettings.wifiSsid || (rule as any)?.allowedWifiSsid;
+    const allowedBssid = orgSettings.wifiBssid || (rule as any)?.allowedWifiBssid;
+
+    if (allowedBssid || allowedSsid) {
+      if (wifiBssid && allowedBssid && wifiBssid.toLowerCase() !== allowedBssid.toLowerCase()) {
+        errors.push('INVALID_WIFI_NETWORK');
+      } else if (wifiSsid && allowedSsid && wifiSsid.toLowerCase() !== allowedSsid.toLowerCase()) {
+        errors.push('INVALID_WIFI_NETWORK');
       }
     }
 
@@ -137,9 +161,19 @@ export class RulesEngineService {
     let message = type === 'CHECK_IN' ? 'Check-in successful' : 'Check-out successful';
 
     if (errors.length > 0) {
-      if (errors.includes('MEMBER_INACTIVE') || errors.includes('DUPLICATE_SCAN') || errors.includes('OUT_OF_GPS_RANGE')) {
+      if (
+        errors.includes('MEMBER_INACTIVE') ||
+        errors.includes('DUPLICATE_SCAN') ||
+        errors.includes('OUT_OF_GPS_RANGE') ||
+        errors.includes('INVALID_WIFI_NETWORK') ||
+        errors.includes('WIFI_REQUIRED')
+      ) {
         status = 'INVALID';
-        message = errors.includes('DUPLICATE_SCAN') ? 'Already scanned recently' : 'Scan failed validation';
+        if (errors.includes('INVALID_WIFI_NETWORK')) {
+          message = 'Not connected to authorized corporate Wi-Fi network';
+        } else {
+          message = customGpsMessage || (errors.includes('DUPLICATE_SCAN') ? 'Already scanned recently' : 'Scan failed validation');
+        }
       } else if (isLate) {
         status = 'FLAGGED';
         message = 'Late check-in recorded';

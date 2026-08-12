@@ -25,7 +25,7 @@ export { useOrganizations, useOrganization, useCreateOrganization, useUpdateOrga
 export { useMembers, useMember, useCreateMember, useUpdateMember, useDeleteMember, useBulkImportMembers, useResetPassword, memberKeys } from './hooks/use-members';
 
 // Attendance hooks
-export { useTodayStats, useAttendanceRecords, useMemberAttendance, useScanAttendance, useManualAttendance, attendanceKeys } from './hooks/use-attendance';
+export { useTodayStats, useAttendanceRecords, useMemberAttendance, useScanAttendance, useScanBatchAttendance, useManualAttendance, attendanceKeys } from './hooks/use-attendance';
 
 // QR hooks
 export { useMemberQR, useGenerateQR, useRegenerateQR, useBulkGenerateQR, qrKeys } from './hooks/use-qr';

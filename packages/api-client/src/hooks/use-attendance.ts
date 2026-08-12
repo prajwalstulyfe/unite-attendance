@@ -89,6 +89,23 @@ export function useScanAttendance() {
   });
 }
 
+/** Batch scan offline queued attendance records */
+export function useScanBatchAttendance() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: ScanAttendanceRequest[]) => {
+      const { data } = await apiClient.post<ApiResponse<{ syncedCount: number; total: number }>>(
+        '/attendance/scan-batch',
+        payload,
+      );
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['organizations'] });
+    },
+  });
+}
+
 /** Manual attendance entry (admin) */
 export function useManualAttendance(orgId: string) {
   const queryClient = useQueryClient();

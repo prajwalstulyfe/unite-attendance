@@ -8,7 +8,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { PwaInstallButton } from "@/components/pwa-install-button";
 import { Html5Qrcode } from "html5-qrcode";
 import { toast } from "sonner";
-import { useScanAttendance, useTodayStats, useAttendanceRecords } from "@repo/api-client";
+import { useScanAttendance, useScanBatchAttendance, useTodayStats, useAttendanceRecords } from "@repo/api-client";
 
 interface ScanResultOverlay {
   status: "VALID" | "INVALID" | "FLAGGED";
@@ -41,6 +41,31 @@ function KioskContent() {
   const html5QrcodeScannerRef = useRef<Html5Qrcode | null>(null);
 
   const { mutateAsync: scanAttendanceApi } = useScanAttendance();
+  const { mutateAsync: scanBatchAttendanceApi } = useScanBatchAttendance();
+
+  // Automatic offline queue sync when network connection restores
+  useEffect(() => {
+    const syncOfflineQueue = async () => {
+      try {
+        const rawQueue = localStorage.getItem("unite_kiosk_offline_queue");
+        if (!rawQueue) return;
+        const items = JSON.parse(rawQueue);
+        if (Array.isArray(items) && items.length > 0) {
+          const res = await scanBatchAttendanceApi(items);
+          localStorage.removeItem("unite_kiosk_offline_queue");
+          toast.success(`Offline Sync Complete: ${res?.syncedCount || items.length} scans uploaded to cloud.`);
+        }
+      } catch (err) {
+        console.error("Offline sync error:", err);
+      }
+    };
+
+    window.addEventListener("online", syncOfflineQueue);
+    if (typeof navigator !== "undefined" && navigator.onLine) {
+      syncOfflineQueue();
+    }
+    return () => window.removeEventListener("online", syncOfflineQueue);
+  }, [scanBatchAttendanceApi]);
 
   // Live attendance stats from API (auto-polls every 30s)
   const { data: todayStats } = useTodayStats(urlOrgSlug);
@@ -153,7 +178,7 @@ function KioskContent() {
           navigator.geolocation.getCurrentPosition(
             (position) => resolve(position),
             () => resolve(null),
-            { timeout: 1200 }
+            { timeout: 5000, maximumAge: 10000, enableHighAccuracy: true }
           );
         });
         if (pos) {
@@ -198,12 +223,30 @@ function KioskContent() {
       }
     } catch (err) {
       console.error("Scan API error:", err);
+      if (activeTerminal) {
+        const payload = {
+          qrToken: decodedText,
+          gpsLocation,
+          deviceInfo: {
+            userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "Kiosk-Browser",
+            platform: typeof navigator !== "undefined" ? navigator.platform : "Kiosk-OS",
+            kioskId: activeTerminal.id,
+            branch: activeTerminal.restrictedDept || "Main",
+            restrictedDept: activeTerminal.restrictedDept || undefined,
+          },
+        };
+        try {
+          const existing = JSON.parse(localStorage.getItem("unite_kiosk_offline_queue") || "[]");
+          existing.push(payload);
+          localStorage.setItem("unite_kiosk_offline_queue", JSON.stringify(existing));
+        } catch {}
+      }
       setScanResult({
-        status: "INVALID",
+        status: "VALID",
         type: "CHECK_IN",
-        name: "Unknown",
+        name: "Offline Member",
         time: now,
-        message: "Scan failed. Please try again.",
+        message: "Saved Offline — Will auto-sync when online",
       });
       setTimeout(() => {
         setScanResult(null);

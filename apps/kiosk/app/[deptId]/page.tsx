@@ -110,7 +110,7 @@ export default function DepartmentLockedKioskPage({
           navigator.geolocation.getCurrentPosition(
             (position) => resolve(position),
             () => resolve(null),
-            { timeout: 1200 }
+            { timeout: 5000, maximumAge: 10000, enableHighAccuracy: true }
           );
         });
         if (pos) {

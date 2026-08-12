@@ -27,7 +27,7 @@ export const ValidationPatterns = {
   uuid: /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
 
   /** Employee ID: alphanumeric with dashes */
-  employeeId: /^[A-Za-z0-9\-]+$/,
+  employeeId: /^[A-Za-z0-9-]+$/,
 } as const;
 
 /**
