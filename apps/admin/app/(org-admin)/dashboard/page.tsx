@@ -35,9 +35,38 @@ export default function DashboardPage() {
   const presentToday = stats?.present ?? 0;
   const lateArrivals = stats?.late ?? 0;
   const absentMembers = stats?.absent ?? 0;
-  const attendanceRate = stats?.attendancePercentage ?? 0;
-
+  const attendanceRate = stats?.attendancePercentage ?? (totalMembers > 0 ? Math.round((presentToday / totalMembers) * 100) : 0);
   const liveRecords = attendanceData?.items || [];
+
+  // Group actual live attendance records by date (YYYY-MM-DD)
+  const checkInsByDateMap: Record<string, number> = {};
+  liveRecords.forEach((rec) => {
+    if (rec.timestamp) {
+      const dateKey = new Date(rec.timestamp).toISOString().split("T")[0];
+      if (dateKey) {
+        checkInsByDateMap[dateKey] = (checkInsByDateMap[dateKey] || 0) + 1;
+      }
+    }
+  });
+
+  // Dynamically compute past 7 days dates using 100% real live database records
+  const trendChartData = Array.from({ length: 7 }).map((_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    const dateKey = d.toISOString().split("T")[0] || "";
+    const dayName = d.toLocaleDateString("en-US", { weekday: "short" });
+    const dayNum = d.getDate().toString().padStart(2, "0");
+    const monthName = d.toLocaleDateString("en-US", { month: "short" });
+    const dateLabel = `${dayName} (${dayNum} ${monthName})`;
+
+    const isToday = i === 6;
+    const realCount = isToday ? presentToday : (checkInsByDateMap[dateKey] ?? 0);
+
+    return {
+      day: dateLabel,
+      present: realCount,
+    };
+  });
 
   return (
     <div className="space-y-8">
@@ -110,15 +139,7 @@ export default function DashboardPage() {
 
           <div className="h-72 w-full pt-2">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={[
-                { day: "Mon", present: presentToday },
-                { day: "Tue", present: presentToday },
-                { day: "Wed", present: presentToday },
-                { day: "Thu", present: presentToday },
-                { day: "Fri", present: presentToday },
-                { day: "Sat", present: 0 },
-                { day: "Sun", present: 0 },
-              ]} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={trendChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="presentGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#6366f1" stopOpacity={0.35} />
@@ -126,7 +147,7 @@ export default function DashboardPage() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? "#27272a" : "#f4f4f5"} />
-                <XAxis dataKey="day" stroke={isDark ? "#71717a" : "#64748b"} fontSize={12} tickLine={{ stroke: isDark ? "#3f3f46" : "#cbd5e1" }} axisLine={{ stroke: isDark ? "#3f3f46" : "#cbd5e1", strokeWidth: 1 }} dy={6} />
+                <XAxis dataKey="day" stroke={isDark ? "#71717a" : "#64748b"} fontSize={11} tickLine={{ stroke: isDark ? "#3f3f46" : "#cbd5e1" }} axisLine={{ stroke: isDark ? "#3f3f46" : "#cbd5e1", strokeWidth: 1 }} dy={6} />
                 <YAxis stroke={isDark ? "#71717a" : "#64748b"} fontSize={12} tickLine={{ stroke: isDark ? "#3f3f46" : "#cbd5e1" }} axisLine={{ stroke: isDark ? "#3f3f46" : "#cbd5e1", strokeWidth: 1 }} />
                 <Tooltip
                   contentStyle={{

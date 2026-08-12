@@ -89,11 +89,10 @@ export default function SuperAdminDashboardPage() {
   const liveArr = liveMrr * 12;
   const avgPerUser = totalMembers > 0 ? Math.round(liveMrr / totalMembers) : 0;
 
+  // Real platform revenue & attendance scan telemetry from database
+  const currentMonthLabel = new Date().toLocaleDateString("en-US", { month: "short" });
   const mrrChartData = [
-    { label: "May", mrr: Math.round(liveMrr * 0.4), scans: Math.round(totalScans * 0.4) },
-    { label: "Jun", mrr: Math.round(liveMrr * 0.6), scans: Math.round(totalScans * 0.6) },
-    { label: "Jul", mrr: Math.round(liveMrr * 0.8), scans: Math.round(totalScans * 0.8) },
-    { label: "Aug (Live)", mrr: liveMrr, scans: totalScans },
+    { label: `${currentMonthLabel} (Live)`, mrr: liveMrr, scans: totalScans },
   ];
 
   const handleOpenWorkspace = (name: string, slug: string) => {

@@ -147,22 +147,65 @@ export default function OrganizationsPage() {
                     </div>
                   </td>
                   <td className="px-5 py-4">
-                    <div className="space-y-1">
-                      <span
-                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${
-                          String(org.plan).toUpperCase() === "ENTERPRISE"
-                            ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20"
-                            : String(org.plan).toUpperCase() === "PRO"
-                            ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20"
-                            : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                        }`}
-                      >
-                        {String(org.plan).toUpperCase() === "FREE" ? "14-DAY TRIAL" : String(org.plan).toUpperCase()}
-                      </span>
-                      <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
-                        {String(org.plan).toUpperCase() === "FREE" ? "Trial (₹0/mo)" : "Est. ₹1,875/mo"}
-                      </p>
-                    </div>
+                    {(() => {
+                      const membersCount = (org as any).totalMembers ?? (org as any).membersCount ?? (org as any)._count?.members ?? 0;
+                      const p = String(org.plan || "FREE").toUpperCase();
+                      let packName = "Pro Growth 100 Pack";
+                      let badge = "PRO GROWTH 100";
+                      let price = "₹1,875/mo";
+
+                      if (p.includes("CUSTOM") || membersCount > 1000) {
+                        packName = "Custom Enterprise";
+                        badge = "CUSTOM ENTERPRISE";
+                        price = "Custom/mo";
+                      } else if (p.includes("ENTERPRISE_1000") || (p === "ENTERPRISE" && membersCount > 500) || membersCount > 500) {
+                        packName = "Enterprise 1000 Pack";
+                        badge = "ENTERPRISE 1000";
+                        price = "₹8,999/mo";
+                      } else if (p.includes("CORPORATE_500") || membersCount > 200) {
+                        packName = "Corporate 500 Pack";
+                        badge = "CORPORATE 500";
+                        price = "₹5,249/mo";
+                      } else if (p.includes("SCALE_200") || membersCount > 100) {
+                        packName = "Scale 200 Pack";
+                        badge = "SCALE 200";
+                        price = "₹2,999/mo";
+                      } else if (p.includes("PRO_100") || p === "PRO" || membersCount > 25) {
+                        packName = "Pro Growth 100 Pack";
+                        badge = "PRO GROWTH 100";
+                        price = "₹1,875/mo";
+                      } else if (p.includes("BUSINESS_50") || p === "BUSINESS" || membersCount > 10) {
+                        packName = "Business 50 Pack";
+                        badge = "BUSINESS 50";
+                        price = "₹1,125/mo";
+                      } else if (p.includes("STARTER_25") || membersCount > 5) {
+                        packName = "Starter 25 Pack";
+                        badge = "STARTER 25";
+                        price = "₹749/mo";
+                      } else if (p.includes("STARTER_10") || p === "STARTER") {
+                        packName = "Starter 10 Pack";
+                        badge = "STARTER 10";
+                        price = "₹375/mo";
+                      } else if (p === "FREE" || p === "FREE_TRIAL") {
+                        packName = "14-Day Free Trial";
+                        badge = "14-DAY TRIAL";
+                        price = "Trial (₹0/mo)";
+                      }
+
+                      return (
+                        <div className="space-y-1">
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                            {badge}
+                          </span>
+                          <p className="text-xs font-black text-zinc-900 dark:text-white">
+                            {packName}
+                          </p>
+                          <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
+                            {price}
+                          </p>
+                        </div>
+                      );
+                    })()}
                   </td>
                   <td className="px-5 py-4 font-mono font-semibold text-zinc-900 dark:text-white">
                     {((org as any).totalMembers ?? (org as any).membersCount ?? (org as any)._count?.members ?? 0).toLocaleString()} Members

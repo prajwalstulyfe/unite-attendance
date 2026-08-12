@@ -54,10 +54,27 @@ export function TopBar() {
     return rawList.map((o) => ({
       name: o.name,
       slug: o.slug,
-      plan: o.plan || "ENTERPRISE",
+      plan: o.plan || "PRO",
       members: (o as any).totalMembers ?? (o as any).membersCount ?? 0,
     }));
   }, [orgsData]);
+
+  const activeOrgObj = useMemo(() => {
+    return apiOrgs.find((o) => o.slug === activeOrgSlug);
+  }, [apiOrgs, activeOrgSlug]);
+
+  const activePlanName = useMemo(() => {
+    const p = String(activeOrgObj?.plan || "PRO").toUpperCase();
+    if (p.includes("CUSTOM")) return "Custom Enterprise";
+    if (p.includes("ENTERPRISE_1000") || (p === "ENTERPRISE" && (activeOrgObj?.members || 0) > 500)) return "Enterprise 1000 Pack";
+    if (p.includes("CORPORATE_500")) return "Corporate 500 Pack";
+    if (p.includes("SCALE_200")) return "Scale 200 Pack";
+    if (p.includes("PRO_100") || p === "PRO") return "Pro Growth 100 Pack";
+    if (p.includes("BUSINESS_50") || p === "BUSINESS") return "Business 50 Pack";
+    if (p.includes("STARTER_25")) return "Starter 25 Pack";
+    if (p.includes("STARTER_10") || p === "STARTER") return "Starter 10 Pack";
+    return "Pro Growth 100 Pack";
+  }, [activeOrgObj]);
 
   // Combine live API results and session memberships
   const combinedOrgs = apiOrgs.length > 0 ? apiOrgs : sessionOrgs;
@@ -347,9 +364,9 @@ export function TopBar() {
         )}
 
         {portalMode === "ORG" && (
-          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200/80 dark:border-zinc-700/80 text-zinc-600 dark:text-zinc-400 text-[11px] font-medium">
-            <Sparkles className="h-3 w-3 text-amber-500" />
-            Enterprise Tier Active
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-300 text-[11px] font-bold">
+            <Sparkles className="h-3.5 w-3.5 text-indigo-500" />
+            {activePlanName} Active
           </div>
         )}
 
