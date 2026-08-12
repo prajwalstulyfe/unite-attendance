@@ -13,6 +13,8 @@ import {
   Building2,
   ChevronRight,
   Lock,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -36,6 +38,7 @@ export default function CheckoutPage() {
   const [cardName, setCardName] = React.useState('');
   const [cardExpiry, setCardExpiry] = React.useState('');
   const [cardCvv, setCardCvv] = React.useState('');
+  const [showCvv, setShowCvv] = React.useState(false);
   const [selectedBank, setSelectedBank] = React.useState('');
   const [agreed, setAgreed] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
@@ -270,15 +273,25 @@ export default function CheckoutPage() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-2">CVV</label>
-                      <input
-                        type="password"
-                        inputMode="numeric"
-                        maxLength={4}
-                        placeholder="•••"
-                        value={cardCvv}
-                        onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                        className="w-full h-12 px-4 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all text-sm font-mono"
-                      />
+                      <div className="relative">
+                        <input
+                          type={showCvv ? "text" : "password"}
+                          inputMode="numeric"
+                          maxLength={4}
+                          placeholder="•••"
+                          value={cardCvv}
+                          onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                          className="w-full h-12 px-4 pr-10 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all text-sm font-mono"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowCvv(!showCvv)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none transition-colors cursor-pointer"
+                          aria-label={showCvv ? "Hide CVV" : "Show CVV"}
+                        >
+                          {showCvv ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
