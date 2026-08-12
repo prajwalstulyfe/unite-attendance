@@ -40,7 +40,8 @@ export function HeroSection() {
   };
 
   return (
-    <section className='pt-36 pb-20 px-6 max-w-6xl mx-auto text-center flex flex-col items-center relative overflow-hidden'>
+    <section className='pt-36 pb-20 relative overflow-hidden transition-colors'>
+      <div className='max-w-6xl mx-auto px-6 text-center flex flex-col items-center'>
       {/* Ambient background glows */}
       <div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-125 h-125 bg-indigo-600/10 dark:bg-indigo-600/10 blur-[140px] rounded-full pointer-events-none' />
       <div className='absolute top-1/3 right-0 w-72 h-72 bg-purple-600/10 dark:bg-purple-600/8 blur-[100px] rounded-full pointer-events-none' />
@@ -330,6 +331,7 @@ export function HeroSection() {
           </div>
         </div>
       </motion.div>
+      </div>
     </section>
   );
 }

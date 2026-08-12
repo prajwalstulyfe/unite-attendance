@@ -7,11 +7,11 @@ export function CtaSection() {
   const urls = usePortalUrls();
 
   return (
-    <section className="py-20 px-6 bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800/80 transition-colors">
-      <div className="max-w-6xl mx-auto">
+    <section className="py-20 bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800/80 transition-colors">
+      <div className="max-w-6xl mx-auto px-6">
         <div className="p-8 sm:p-12 md:p-16 rounded-3xl bg-linear-to-r from-indigo-500/10 via-purple-500/10 to-indigo-500/10 border border-indigo-500/20 text-center relative overflow-hidden space-y-6 shadow-xl">
           <div className="max-w-2xl mx-auto space-y-3">
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
               Ready to Modernize Your Attendance?
             </h2>
             <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 font-medium">

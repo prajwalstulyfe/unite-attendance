@@ -34,11 +34,11 @@ export function FaqSection() {
   ];
 
   return (
-    <section id="faq" className="py-20 px-6 md:px-12 bg-zinc-100/60 dark:bg-zinc-900/40 border-t border-zinc-200 dark:border-zinc-800/80 transition-colors">
-      <div className="max-w-6xl mx-auto space-y-12">
+    <section id="faq" className="py-20 bg-zinc-100/60 dark:bg-zinc-900/40 border-t border-zinc-200 dark:border-zinc-800/80 transition-colors">
+      <div className="max-w-6xl mx-auto px-6 space-y-12">
         <div className="text-center space-y-3">
           <span className="text-xs font-extrabold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Frequently Asked Questions</span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-zinc-900 dark:text-white tracking-tight">Got Questions? We Have Answers</h2>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight">Got Questions? We Have Answers</h2>
         </div>
 
         <div className="max-w-3xl mx-auto space-y-4">
