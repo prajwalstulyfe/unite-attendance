@@ -54,7 +54,7 @@ async function main() {
     data: {
       name: 'Unite India',
       slug: 'unite-india',
-      plan: Plan.ENTERPRISE,
+      plan: Plan.PRO,
       settings: {
         timezone: 'Asia/Kolkata',
         dateFormat: 'DD/MM/YYYY',
