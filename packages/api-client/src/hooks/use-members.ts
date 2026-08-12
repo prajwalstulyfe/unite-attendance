@@ -132,3 +132,20 @@ export function useBulkImportMembers(orgId: string) {
     },
   });
 }
+
+/** Reset a member's password */
+export function useResetPassword(orgId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ memberId, password }: { memberId: string; password?: string }) => {
+      const { data } = await apiClient.post<ApiResponse<{ success: boolean; message: string; temporaryPassword?: string }>>(
+        `/organizations/${orgId}/members/${memberId}/reset-password`,
+        { password },
+      );
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: memberKeys.lists(orgId) });
+    },
+  });
+}

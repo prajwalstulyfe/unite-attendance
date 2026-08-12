@@ -13,28 +13,6 @@ export interface MemberRecord {
   status: "active" | "inactive";
 }
 
-const defaultMembersMap: Record<string, MemberRecord[]> = {
-  "acme-corp": [
-    { id: "acme-1", name: "Jane Smith", email: "jane@acme.com", empId: "EMP-102", dept: "Engineering", role: "Member", status: "active" },
-    { id: "acme-2", name: "John Doe", email: "john@acme.com", empId: "EMP-101", dept: "Engineering", role: "Manager", status: "active" },
-    { id: "acme-3", name: "Alice Johnson", email: "alice@acme.com", empId: "EMP-103", dept: "Human Resources", role: "Member", status: "active" },
-    { id: "acme-4", name: "Bob Williams", email: "bob@acme.com", empId: "EMP-104", dept: "Engineering", role: "Member", status: "active" },
-  ],
-  "stulyfe-edu": [
-    { id: "stu-1", name: "Prof. Rajesh Kumar", email: "rajesh@stulyfe.edu", empId: "FAC-201", dept: "Computer Science", role: "Manager", status: "active" },
-    { id: "stu-2", name: "Dr. Ananya Sharma", email: "ananya@stulyfe.edu", empId: "FAC-202", dept: "Electronics", role: "Member", status: "active" },
-    { id: "stu-3", name: "Rahul Verma", email: "rahul@stulyfe.edu", empId: "STU-501", dept: "Computer Science", role: "Member", status: "active" },
-  ],
-  "cybertech": [
-    { id: "cyb-1", name: "Alex Vance", email: "alex@cybertech.io", empId: "DEV-301", dept: "AI & Cloud", role: "Manager", status: "active" },
-    { id: "cyb-2", name: "Elena Rostova", email: "elena@cybertech.io", empId: "DEV-302", dept: "Cybersecurity", role: "Member", status: "active" },
-  ],
-  "global-logistics": [
-    { id: "log-1", name: "David Miller", email: "david@globallogistics.com", empId: "LOG-401", dept: "Supply Chain", role: "Manager", status: "active" },
-    { id: "log-2", name: "Samira Patel", email: "samira@globallogistics.com", empId: "LOG-402", dept: "Fleet Operations", role: "Member", status: "active" },
-  ],
-};
-
 interface UIState {
   portalMode: PortalMode;
   activeOrgName: string;
@@ -54,15 +32,24 @@ interface UIState {
   deleteMember: (orgSlug: string, memberId: string) => void;
 }
 
+const dummyStorage: Storage = {
+  length: 0,
+  clear: () => {},
+  getItem: () => null,
+  key: () => null,
+  removeItem: () => {},
+  setItem: () => {},
+};
+
 export const useUIStore = create<UIState>()(
   persist(
     (set) => ({
       portalMode: "ORG",
-      activeOrgName: "My Organization",
-      activeOrgSlug: "my-org",
+      activeOrgName: "",
+      activeOrgSlug: "",
       isSuperAdminUser: true,
       isSidebarCollapsed: false,
-      membersMap: defaultMembersMap,
+      membersMap: {},
 
       setPortalMode: (portalMode) => set({ portalMode }),
       togglePortalMode: () =>
@@ -116,7 +103,7 @@ export const useUIStore = create<UIState>()(
     }),
     {
       name: "unite-ui-store-v6",
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => (typeof window !== "undefined" ? localStorage : dummyStorage)),
     }
   )
 );

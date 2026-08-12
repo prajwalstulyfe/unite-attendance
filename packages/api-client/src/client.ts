@@ -50,13 +50,29 @@ const apiClient = axios.create({
   withCredentials: true,
 });
 
-// ─── Request Interceptor: Attach access token ───────────────
+// ─── Request Interceptor: Attach access token & active org header ───────────
 apiClient.interceptors.request.use(
   (config) => {
     const token = tokenStorage.getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    if (typeof window !== 'undefined') {
+      try {
+        const uiStateRaw = localStorage.getItem('unite-ui-store-v6');
+        if (uiStateRaw) {
+          const uiState = JSON.parse(uiStateRaw);
+          const activeSlug = uiState?.state?.activeOrgSlug;
+          if (activeSlug) {
+            config.headers['X-Organization-Id'] = activeSlug;
+          }
+        }
+      } catch {
+        // ignore JSON parse errors
+      }
+    }
+
     return config;
   },
   (error) => Promise.reject(error),

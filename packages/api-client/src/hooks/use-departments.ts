@@ -47,10 +47,10 @@ export function useCreateDepartment(orgId: string) {
 export function useUpdateDepartment(orgId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+    mutationFn: async ({ id, name, headId, branchId }: { id: string; name?: string; headId?: string | null; branchId?: string }) => {
       const { data } = await apiClient.patch<ApiResponse<Department>>(
         `/organizations/${orgId}/departments/${id}`,
-        { name },
+        { name, headId, branchId },
       );
       return data.data;
     },

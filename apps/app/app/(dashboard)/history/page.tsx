@@ -19,10 +19,11 @@ export default function HistoryPage() {
 
   const records = attendanceSummary?.records || [];
 
-  const filteredHistory = records.filter((item) => {
+  const filteredHistory = records.filter((item: any) => {
+    const s = (item.status || "").toUpperCase();
     if (statusFilter === "ALL") return true;
-    if (statusFilter === "VALID") return item.status === "present";
-    if (statusFilter === "LATE") return item.status === "late";
+    if (statusFilter === "VALID") return s === "VALID" || s === "PRESENT";
+    if (statusFilter === "LATE") return s === "FLAGGED" || s === "LATE";
     return true;
   });
 

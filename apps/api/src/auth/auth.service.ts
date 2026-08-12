@@ -148,6 +148,9 @@ export class AuthService {
         orgLogo: m.organization.logo,
         role: m.role,
         memberId: m.id,
+        employeeId: m.employeeId || null,
+        designation: m.designation || null,
+        phone: m.phone || null,
         departmentName: m.department?.name || null,
         branchName: m.branch?.name || null,
       })),
@@ -155,32 +158,41 @@ export class AuthService {
   }
 
   async validateGoogleUser(googleUser: { email: string; firstName: string; lastName: string }) {
-    const user = await this.prisma.user.findUnique({
+    let existingUser = await this.prisma.user.findUnique({
       where: { email: googleUser.email.toLowerCase() },
-      include: {
-        orgMemberships: {
-          include: {
-            organization: true,
-            department: true,
-            branch: true,
-          },
-        },
-      },
     });
 
-    if (!user) {
-      throw new UnauthorizedException(
-        `No account found for ${googleUser.email}. Access denied.`
-      );
+    if (!existingUser) {
+      const name = `${googleUser.firstName || ''} ${googleUser.lastName || ''}`.trim() || googleUser.email.split('@')[0] || 'User';
+      const randomPasswordHash = await bcrypt.hash(Math.random().toString(36), 10);
+      existingUser = await this.prisma.user.create({
+        data: {
+          email: googleUser.email.toLowerCase(),
+          name,
+          passwordHash: randomPasswordHash,
+        },
+      });
+
+      const defaultOrg = await this.prisma.organization.findFirst({
+        orderBy: { createdAt: 'asc' },
+      });
+
+      if (defaultOrg) {
+        await this.prisma.orgMember.create({
+          data: {
+            userId: existingUser.id,
+            orgId: defaultOrg.id,
+            role: 'MEMBER',
+          },
+        });
+      }
     }
 
-    if (user.globalRole !== GlobalRole.SUPER_ADMIN && user.orgMemberships.length === 0) {
-      throw new UnauthorizedException(
-        `Account ${googleUser.email} is not linked to any active organization.`
-      );
+    if (!existingUser.isActive) {
+      throw new UnauthorizedException('Your account has been deactivated');
     }
 
-    return this.generateTokens(user.id, user.email, user.globalRole);
+    return this.generateTokens(existingUser.id, existingUser.email, existingUser.globalRole);
   }
 
   private async generateTokens(userId: string, email: string, globalRole: string) {

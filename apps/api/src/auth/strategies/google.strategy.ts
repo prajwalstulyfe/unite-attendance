@@ -8,9 +8,9 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor(configService: ConfigService) {
     const rawCallback = configService.get<string>('GOOGLE_CALLBACK_URL') || '';
     const isProd = process.env.NODE_ENV === 'production' || process.env['API_URL']?.includes('unite-attendance.com');
-    
-    // Auto-fix if .env has localhost URL on production server
-    let callbackURL = rawCallback || 'https://api.unite-attendance.com/auth/google/callback';
+    const defaultHost = isProd ? 'https://api.unite-attendance.com' : 'http://localhost:3001';
+
+    let callbackURL = rawCallback || `${defaultHost}/auth/google/callback`;
     if (isProd && callbackURL.includes('localhost')) {
       callbackURL = 'https://api.unite-attendance.com/auth/google/callback';
     }

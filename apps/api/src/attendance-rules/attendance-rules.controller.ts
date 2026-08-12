@@ -27,7 +27,7 @@ export class AttendanceRulesController {
   }
 
   @Get()
-  @Roles(OrgRole.ORG_ADMIN, OrgRole.MANAGER)
+  @Roles(OrgRole.ORG_ADMIN, (OrgRole as any).BRANCH_MANAGER, (OrgRole as any).DEPT_HEAD)
   async findAll(@Param('orgId') orgId: string) {
     const data = await this.rulesService.findAll(orgId);
     return { success: true, data, timestamp: new Date().toISOString() };

@@ -11,8 +11,8 @@ export enum GlobalRole {
 /** Organization-level role */
 export enum OrgRole {
   ORG_ADMIN = 'org_admin',
-  MANAGER = 'manager',
-  VIEWER = 'viewer',
+  BRANCH_MANAGER = 'branch_manager',
+  DEPT_HEAD = 'dept_head',
   MEMBER = 'member',
 }
 

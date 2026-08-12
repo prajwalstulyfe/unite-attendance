@@ -59,8 +59,19 @@ export interface Department {
   id: string;
   orgId: string;
   branchId: string | null;
+  headId?: string | null;
   name: string;
   createdAt: string;
+  head?: {
+    id: string;
+    user?: {
+      name: string;
+      email: string;
+    };
+  } | null;
+  _count?: {
+    members: number;
+  };
 }
 
 /** GPS location */

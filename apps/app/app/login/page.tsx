@@ -68,7 +68,13 @@ export default function AppLoginPage() {
         toast.error("Login failed. No token returned from server.");
       }
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || err?.message || "Invalid credentials. Please try again.");
+      const serverMsg = err?.response?.data?.message;
+      const displayMsg = Array.isArray(serverMsg)
+        ? serverMsg.join(", ")
+        : typeof serverMsg === "string" && serverMsg.trim().length > 0
+          ? serverMsg
+          : "Incorrect email, Member ID or password. Please check your credentials and try again.";
+      toast.error(displayMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -124,7 +130,7 @@ export default function AppLoginPage() {
                   required
                   value={emailOrEmpId}
                   onChange={(e) => setEmailOrEmpId(e.target.value)}
-                  placeholder="jane@acme.com or EMP-102"
+                  placeholder="rohit@unite-india.com or EMP-101"
                   className="w-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-300 dark:border-zinc-700/80 rounded-2xl pl-10 pr-3 py-3 text-xs text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:border-indigo-500 font-medium transition-colors"
                 />
               </div>

@@ -7,7 +7,20 @@ import * as bcrypt from 'bcrypt';
 export class MembersService {
   constructor(private prisma: PrismaService) {}
 
-  async create(orgId: string, dto: CreateMemberDto) {
+  private async resolveOrgId(idOrSlug: string): Promise<string> {
+    if (!idOrSlug) return idOrSlug;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
+    const org = await this.prisma.organization.findFirst({
+      where: isUuid
+        ? { OR: [{ id: idOrSlug }, { slug: idOrSlug.toLowerCase() }] }
+        : { slug: idOrSlug.toLowerCase() },
+      select: { id: true },
+    });
+    return org ? org.id : idOrSlug;
+  }
+
+  async create(orgIdOrSlug: string, dto: CreateMemberDto) {
+    const orgId = await this.resolveOrgId(orgIdOrSlug);
     // 1. Find or create user
     let user = await this.prisma.user.findUnique({
       where: { email: dto.email.toLowerCase() },
@@ -72,7 +85,8 @@ export class MembersService {
     return member;
   }
 
-  async findAll(orgId: string, page = 1, pageSize = 20, search?: string) {
+  async findAll(orgIdOrSlug: string, page = 1, pageSize = 20, search?: string) {
+    const orgId = await this.resolveOrgId(orgIdOrSlug);
     const skip = (page - 1) * pageSize;
 
     const where = {
@@ -116,7 +130,8 @@ export class MembersService {
     };
   }
 
-  async findOne(orgId: string, id: string) {
+  async findOne(orgIdOrSlug: string, id: string) {
+    const orgId = await this.resolveOrgId(orgIdOrSlug);
     const member = await this.prisma.orgMember.findFirst({
       where: { id, orgId },
       include: {
@@ -162,5 +177,22 @@ export class MembersService {
       where: { id },
       data: { isActive: false },
     });
+  }
+
+  async resetPassword(orgId: string, id: string, newPassword?: string) {
+    const member = await this.findOne(orgId, id);
+    const passToSet = newPassword && newPassword.trim().length > 0 ? newPassword.trim() : 'Welcome123!';
+    const passwordHash = await bcrypt.hash(passToSet, 10);
+
+    await this.prisma.user.update({
+      where: { id: member.userId },
+      data: { passwordHash },
+    });
+
+    return {
+      success: true,
+      message: `Password reset successfully for ${member.user.name}`,
+      temporaryPassword: passToSet,
+    };
   }
 }

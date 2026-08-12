@@ -6,16 +6,14 @@ import { OrgRole, GlobalRole } from '@repo/types';
 
 /** Role hierarchy — higher number = more permissions */
 const ROLE_HIERARCHY: Record<OrgRole, number> = {
-  [OrgRole.ORG_ADMIN]: 100,
-  [OrgRole.MANAGER]: 75,
-  [OrgRole.VIEWER]: 50,
+  [OrgRole.ORG_ADMIN]: 90,
+  [OrgRole.BRANCH_MANAGER]: 75,
+  [OrgRole.DEPT_HEAD]: 50,
   [OrgRole.MEMBER]: 25,
 };
 
 /**
  * Check if a user's role has enough permission (at or above required level)
- * @example hasPermission(OrgRole.MANAGER, OrgRole.VIEWER) → true
- * @example hasPermission(OrgRole.MEMBER, OrgRole.MANAGER) → false
  */
 export function hasPermission(userRole: OrgRole, requiredRole: OrgRole): boolean {
   return (ROLE_HIERARCHY[userRole] ?? 0) >= (ROLE_HIERARCHY[requiredRole] ?? 0);
@@ -36,17 +34,17 @@ export function isOrgAdmin(orgRole: OrgRole): boolean {
 }
 
 /**
- * Check if user can manage members (org_admin or manager)
+ * Check if user can manage members (org_admin, branch_manager, or dept_head)
  */
 export function canManageMembers(orgRole: OrgRole): boolean {
-  return hasPermission(orgRole, OrgRole.MANAGER);
+  return hasPermission(orgRole, OrgRole.DEPT_HEAD);
 }
 
 /**
  * Check if user can view attendance data
  */
 export function canViewAttendance(orgRole: OrgRole): boolean {
-  return hasPermission(orgRole, OrgRole.VIEWER);
+  return hasPermission(orgRole, OrgRole.MEMBER);
 }
 
 /**
@@ -61,9 +59,9 @@ export function canEditSettings(orgRole: OrgRole): boolean {
  */
 export function getRoleLabel(role: OrgRole): string {
   const labels: Record<OrgRole, string> = {
-    [OrgRole.ORG_ADMIN]: 'Admin',
-    [OrgRole.MANAGER]: 'Manager',
-    [OrgRole.VIEWER]: 'Viewer',
+    [OrgRole.ORG_ADMIN]: 'Org Admin',
+    [OrgRole.BRANCH_MANAGER]: 'Branch Manager',
+    [OrgRole.DEPT_HEAD]: 'Department Head',
     [OrgRole.MEMBER]: 'Member',
   };
   return labels[role] ?? role;

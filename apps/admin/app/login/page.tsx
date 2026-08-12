@@ -87,7 +87,13 @@ export default function LoginPage() {
         toast.error("Login failed. No token returned from server.");
       }
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Invalid credentials. Please try again.");
+      const serverMsg = err?.response?.data?.message;
+      const displayMsg = Array.isArray(serverMsg)
+        ? serverMsg.join(", ")
+        : typeof serverMsg === "string" && serverMsg.trim().length > 0
+          ? serverMsg
+          : "Incorrect email or password. Please verify your credentials and try again.";
+      toast.error(displayMsg);
     } finally {
       setLoading(false);
     }
@@ -97,9 +103,9 @@ export default function LoginPage() {
     window.location.href = `${getApiBaseUrl()}/auth/google?state=admin`;
   };
 
-  const handleQuickFill = (demoEmail: string) => {
+  const handleQuickFill = (demoEmail: string, pass = "Welcome123!") => {
     setEmail(demoEmail);
-    setPassword("changeme123!");
+    setPassword(pass);
   };
 
   return (
@@ -123,13 +129,13 @@ export default function LoginPage() {
         {isLocalhost && (
           <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-3.5 space-y-2 text-xs">
             <span className="text-zinc-400 font-semibold flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
-              <Sparkles className="h-3.5 w-3.5 text-amber-400" /> Pre-Seeded Database Accounts (Local Dev Only)
+              <Sparkles className="h-3.5 w-3.5 text-amber-400" /> Pre-Seeded Live Accounts (Click to Auto-Fill)
             </span>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1">
+            <div className="grid grid-cols-2 gap-1.5 pt-1">
               <button
                 type="button"
-                onClick={() => handleQuickFill("admin@unite-attendance.com")}
+                onClick={() => handleQuickFill("admin@unite-attendance.com", "changeme123!")}
                 className="px-2.5 py-1.5 rounded-lg bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-left text-[11px] text-zinc-300 transition-colors flex items-center justify-between"
               >
                 <span className="truncate">Super Admin</span>
@@ -138,10 +144,28 @@ export default function LoginPage() {
 
               <button
                 type="button"
-                onClick={() => handleQuickFill("john@acme.com")}
+                onClick={() => handleQuickFill("rohit@unite-india.com", "Welcome123!")}
                 className="px-2.5 py-1.5 rounded-lg bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-left text-[11px] text-zinc-300 transition-colors flex items-center justify-between"
               >
-                <span className="truncate">Org Admin</span>
+                <span className="truncate">Dept Head (Rohit)</span>
+                <span className="text-indigo-400 text-[10px] font-mono font-semibold">Fill</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleQuickFill("aarav@unite-india.com", "Welcome123!")}
+                className="px-2.5 py-1.5 rounded-lg bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-left text-[11px] text-zinc-300 transition-colors flex items-center justify-between"
+              >
+                <span className="truncate">Branch Mgr (Aarav)</span>
+                <span className="text-indigo-400 text-[10px] font-mono font-semibold">Fill</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleQuickFill("rohan@unite-india.com", "Welcome123!")}
+                className="px-2.5 py-1.5 rounded-lg bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-left text-[11px] text-zinc-300 transition-colors flex items-center justify-between"
+              >
+                <span className="truncate">Member (Rohan)</span>
                 <span className="text-indigo-400 text-[10px] font-mono font-semibold">Fill</span>
               </button>
             </div>

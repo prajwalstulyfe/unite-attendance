@@ -108,7 +108,7 @@ export default function AddMemberPage() {
             </div>
 
             <div className="sm:col-span-2">
-              <label className="text-xs font-medium text-zinc-700 dark:text-zinc-400 block mb-1 flex items-center gap-1">
+              <label className="text-xs font-medium text-zinc-700 dark:text-zinc-400 mb-1 flex items-center gap-1">
                 <Mail className="h-3.5 w-3.5 text-zinc-400" /> Email Address
               </label>
               <input
@@ -130,9 +130,9 @@ export default function AddMemberPage() {
             Role & Department Assignment ({activeOrgName})
           </h3>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-medium text-zinc-700 dark:text-zinc-400 block mb-1 flex items-center gap-1">
+              <label className="text-xs font-medium text-zinc-700 dark:text-zinc-400 mb-1 flex items-center gap-1">
                 <Hash className="h-3.5 w-3.5 text-zinc-400" /> Employee / Student ID
               </label>
               <input
@@ -152,26 +152,9 @@ export default function AddMemberPage() {
                 onChange={(e) => setDepartment(e.target.value)}
                 className="w-full px-3.5 py-2.5 bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-lg text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-indigo-500"
               >
-                <option value="Engineering">Engineering</option>
+                <option value="Software Engineering">Software Engineering</option>
                 <option value="Human Resources">Human Resources</option>
-                <option value="Computer Science">Computer Science</option>
-                <option value="Sales & Marketing">Sales & Marketing</option>
-                <option value="Supply Chain">Supply Chain</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-xs font-medium text-zinc-700 dark:text-zinc-400 block mb-1 flex items-center gap-1">
-                <Shield className="h-3.5 w-3.5 text-zinc-400" /> System Role
-              </label>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-lg text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-indigo-500"
-              >
-                <option value="Member">Member (Employee / Student)</option>
-                <option value="Manager">Department Manager</option>
-                <option value="Admin">Organization Admin</option>
+                <option value="Product Sales">Product Sales</option>
               </select>
             </div>
           </div>

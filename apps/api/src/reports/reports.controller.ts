@@ -8,14 +8,14 @@ export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
   @Get('daily')
-  @Roles(OrgRole.ORG_ADMIN, OrgRole.MANAGER, OrgRole.VIEWER)
+  @Roles(OrgRole.ORG_ADMIN, (OrgRole as any).BRANCH_MANAGER, (OrgRole as any).DEPT_HEAD, OrgRole.MEMBER)
   async getDailyReport(@Param('orgId') orgId: string, @Query('date') date?: string) {
     const data = await this.reportsService.getDailyReport(orgId, date);
     return { success: true, data, timestamp: new Date().toISOString() };
   }
 
   @Get('export')
-  @Roles(OrgRole.ORG_ADMIN, OrgRole.MANAGER)
+  @Roles(OrgRole.ORG_ADMIN, (OrgRole as any).BRANCH_MANAGER, (OrgRole as any).DEPT_HEAD)
   @Header('Content-Type', 'text/csv')
   @Header('Content-Disposition', 'attachment; filename="attendance-report.csv"')
   async exportCsv(

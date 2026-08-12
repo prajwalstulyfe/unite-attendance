@@ -43,8 +43,14 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(@Req() req: any, @Res() res: any) {
-    const adminUrl = process.env['NEXT_PUBLIC_ADMIN_URL'] || 'https://admin.unite-attendance.com';
-    const appUrl = process.env['NEXT_PUBLIC_APP_URL'] || 'https://app.unite-attendance.com';
+    const host = req.headers?.host || '';
+    const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1');
+
+    const defaultAdminUrl = isLocalhost ? 'http://localhost:3002' : 'https://admin.unite-attendance.com';
+    const defaultAppUrl = isLocalhost ? 'http://localhost:3000' : 'https://app.unite-attendance.com';
+
+    const adminUrl = process.env['NEXT_PUBLIC_ADMIN_URL'] || defaultAdminUrl;
+    const appUrl = process.env['NEXT_PUBLIC_APP_URL'] || defaultAppUrl;
     const state = req.query?.state || '';
     const referer = req.headers?.referer || '';
     const isAdmin = state.includes('admin') || referer.includes('admin');

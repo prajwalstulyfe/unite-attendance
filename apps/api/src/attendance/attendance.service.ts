@@ -121,16 +121,27 @@ export class AttendanceService {
     return record;
   }
 
-  async getTodayStats(orgId: string) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  private async resolveOrgId(idOrSlug: string): Promise<string> {
+    if (!idOrSlug) return idOrSlug;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
+    const org = await this.prisma.organization.findFirst({
+      where: isUuid
+        ? { OR: [{ id: idOrSlug }, { slug: idOrSlug.toLowerCase() }] }
+        : { slug: idOrSlug.toLowerCase() },
+      select: { id: true },
+    });
+    return org ? org.id : idOrSlug;
+  }
+
+  async getTodayStats(orgIdOrSlug: string) {
+    const orgId = await this.resolveOrgId(orgIdOrSlug);
+    const last24h = new Date(Date.now() - 24 * 3600 * 1000);
 
     const [totalMembers, todayRecords] = await Promise.all([
       this.prisma.orgMember.count({ where: { orgId, isActive: true } }),
       this.prisma.attendanceRecord.findMany({
         where: {
           orgId,
-          timestamp: { gte: today },
         },
       }),
     ]);
@@ -153,7 +164,7 @@ export class AttendanceService {
     const attendancePercentage = totalMembers > 0 ? Math.round((present / totalMembers) * 1000) / 10 : 0;
 
     return {
-      date: today.toISOString().split('T')[0],
+      date: last24h.toISOString().split('T')[0],
       totalMembers,
       present,
       absent,
@@ -164,7 +175,8 @@ export class AttendanceService {
     };
   }
 
-  async findAll(orgId: string, page = 1, pageSize = 20, memberId?: string, status?: string) {
+  async findAll(orgIdOrSlug: string, page = 1, pageSize = 20, memberId?: string, status?: string) {
+    const orgId = await this.resolveOrgId(orgIdOrSlug);
     const skip = (page - 1) * pageSize;
 
     const where = {

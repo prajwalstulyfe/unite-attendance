@@ -37,7 +37,7 @@ export default function ProfilePage() {
   const orgName = primaryOrg?.orgName || "Unite Attendance";
   const departmentName = primaryOrg?.departmentName || "General";
   const branchName = primaryOrg?.branchName || "";
-  const empId = primaryOrg?.memberId || `EMP-${user?.id?.slice(0, 6).toUpperCase() || "101"}`;
+  const empId = primaryOrg?.employeeId || `EMP-${(primaryOrg?.memberId || user?.id || "").slice(-4).toUpperCase()}`;
 
   return (
     <div className="space-y-4 max-w-sm mx-auto">
@@ -77,7 +77,7 @@ export default function ProfilePage() {
         {/* Member Details */}
         <div className="flex items-center gap-4 relative z-10">
           <div className="relative">
-            <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 border-2 border-indigo-400/30 flex items-center justify-center font-black text-white text-2xl shadow-lg shadow-indigo-500/20">
+            <div className="h-16 w-16 rounded-2xl bg-linear-to-br from-indigo-500 to-purple-600 border-2 border-indigo-400/30 flex items-center justify-center font-black text-white text-2xl shadow-lg shadow-indigo-500/20">
               {userInitials}
             </div>
             <div className="absolute -bottom-1 -right-1 h-5 w-5 bg-emerald-400 border-2 border-white dark:border-zinc-900 rounded-full flex items-center justify-center">

@@ -2,54 +2,74 @@
 
 import { useState } from "react";
 import { PageHeader, StatusBadge } from "@repo/ui";
-import { UserPlus, QrCode, Search, Filter, Pencil, Trash2, Building2, X, Save } from "lucide-react";
+import { UserPlus, QrCode, Search, Filter, Pencil, Trash2, Building2, X, Save, KeyRound, Lock, RefreshCw, Check } from "lucide-react";
 import Link from "next/link";
 import { useUIStore, MemberRecord } from "@/lib/use-ui-store";
 import { toast } from "sonner";
-import { useUpdateMember, useDeleteMember } from "@repo/api-client";
+import { useMembers, useUpdateMember, useDeleteMember, useResetPassword } from "@repo/api-client";
 import { DeleteConfirmModal } from "@/components/delete-confirm-modal";
+import { NoOrgSelected } from "@/components/no-org-selected";
 
 export default function MembersPage() {
-  const { activeOrgName, activeOrgSlug, membersMap, editMember, deleteMember } = useUIStore();
+  const { activeOrgName, activeOrgSlug } = useUIStore();
+  const currentOrgSlug = activeOrgSlug;
+  const currentOrgName = activeOrgName || activeOrgSlug;
   const [searchQuery, setSearchQuery] = useState("");
 
+  const { data: membersData, isLoading } = useMembers(currentOrgSlug);
+
+  if (!activeOrgSlug) {
+    return <NoOrgSelected description="Please select an organization from the Organization Selector at the top to view its members directory." />;
+  }
+
   // Backend API Mutations
-  const updateMemberApi = useUpdateMember(activeOrgSlug);
-  const deleteMemberApi = useDeleteMember(activeOrgSlug);
+  const updateMemberApi = useUpdateMember(currentOrgSlug);
+  const deleteMemberApi = useDeleteMember(currentOrgSlug);
+  const resetPasswordMutation = useResetPassword(currentOrgSlug);
 
-  // Edit Modal State
   const [editingMember, setEditingMember] = useState<MemberRecord | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editEmail, setEditEmail] = useState("");
-  const [editEmpId, setEditEmpId] = useState("");
-  const [editDept, setEditDept] = useState("Engineering");
-  const [editRole, setEditRole] = useState("Member");
-
-  // Delete Modal State
   const [deletingMember, setDeletingMember] = useState<MemberRecord | null>(null);
+  const [resetPassMember, setResetPassMember] = useState<MemberRecord | null>(null);
 
-  const currentOrgMembers = membersMap[activeOrgSlug] || [];
+  // Form State for Editing
+  const [editName, setEditName] = useState("");
+  const [editEmpId, setEditEmpId] = useState("");
 
-  const filteredMembers = currentOrgMembers.filter(
+  // Form State for Reset Pass
+  const [newPassword, setNewPassword] = useState("");
+  const [sendEmailNotify, setSendEmailNotify] = useState(true);
+
+  // Map backend API data to UI structure
+  const memberList: MemberRecord[] =
+    membersData?.items && membersData.items.length > 0
+      ? membersData.items.map((m: any) => ({
+          id: m.id,
+          name: m.user?.name || m.name || "Member",
+          email: m.user?.email || m.email || "No email",
+          role: m.role || "MEMBER",
+          empId: m.employeeId || `EMP-${m.id.slice(-6).toUpperCase()}`,
+          dept: m.department?.name || "General Member",
+          branch: "Main HQ",
+          status: "active",
+        }))
+      : [];
+
+  const filteredMembers = memberList.filter(
     (m) =>
       m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       m.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      m.empId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      m.dept.toLowerCase().includes(searchQuery.toLowerCase())
+      m.empId.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleOpenEdit = (m: MemberRecord) => {
     setEditingMember(m);
     setEditName(m.name);
-    setEditEmail(m.email);
     setEditEmpId(m.empId);
-    setEditDept(m.dept);
-    setEditRole(m.role);
   };
 
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingMember) return;
+    if (!editingMember || !editName.trim()) return;
 
     try {
       await updateMemberApi.mutateAsync({
@@ -60,16 +80,8 @@ export default function MembersPage() {
         },
       });
     } catch (err) {
-      console.log("Backend sync offline, updating local state");
+      console.log("Error updating member", err);
     }
-
-    editMember(activeOrgSlug, editingMember.id, {
-      name: editName.trim(),
-      email: editEmail.trim(),
-      empId: editEmpId.trim(),
-      dept: editDept,
-      role: editRole,
-    });
 
     toast.success(`Updated member details for ${editName.trim()}`);
     setEditingMember(null);
@@ -81,19 +93,50 @@ export default function MembersPage() {
     try {
       await deleteMemberApi.mutateAsync(deletingMember.id);
     } catch (err) {
-      console.log("Backend sync offline, deleting from local state");
+      console.log("Error deleting member", err);
     }
 
-    deleteMember(activeOrgSlug, deletingMember.id);
-    toast.success(`Deleted ${deletingMember.name} from ${activeOrgName}`);
+    toast.success(`Deleted ${deletingMember.name} from ${currentOrgName}`);
     setDeletingMember(null);
+  };
+
+  const handleOpenResetPass = (m: MemberRecord) => {
+    setResetPassMember(m);
+    handleGenerateRandomPass();
+  };
+
+  const handleGenerateRandomPass = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789#@!";
+    let pass = "Unite@";
+    for (let i = 0; i < 6; i++) {
+      pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setNewPassword(pass);
+  };
+
+  const handleConfirmResetPass = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetPassMember || !newPassword) return;
+
+    try {
+      await resetPasswordMutation.mutateAsync({
+        memberId: resetPassMember.id,
+        password: newPassword.trim(),
+      });
+      toast.success(`Password reset successfully for ${resetPassMember.name}! New Password: ${newPassword.trim()}`);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to reset password");
+    }
+
+    setResetPassMember(null);
+    setNewPassword("");
   };
 
   return (
     <div className="space-y-6">
       <PageHeader
         title={`Members Directory — ${activeOrgName}`}
-        description={`Manage employee and student profiles, roles, and attendance QR codes for ${activeOrgName}`}
+        description={`Manage employee and student profiles, roles, passwords, and attendance QR codes for ${activeOrgName}`}
         action={
           <Link
             href="/members/new"
@@ -150,9 +193,8 @@ export default function MembersPage() {
             <thead>
               <tr className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900/40 text-[11px] font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">
                 <th className="py-3 px-4">Member</th>
-                <th className="py-3 px-4">Employee ID</th>
+                <th className="py-3 px-4">Employee / Student ID</th>
                 <th className="py-3 px-4">Department</th>
-                <th className="py-3 px-4">Role</th>
                 <th className="py-3 px-4">Status</th>
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
@@ -161,7 +203,7 @@ export default function MembersPage() {
               {filteredMembers.map((m) => (
                 <tr key={m.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition-colors">
                   <td className="py-3 px-4 flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 flex items-center justify-center font-bold text-indigo-600 dark:text-indigo-400">
+                    <div className="h-8 w-8 rounded-full bg-linear-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 flex items-center justify-center font-bold text-indigo-600 dark:text-indigo-400">
                       {m.name[0]}
                     </div>
                     <div>
@@ -170,12 +212,7 @@ export default function MembersPage() {
                     </div>
                   </td>
                   <td className="py-3 px-4 font-mono text-zinc-600 dark:text-zinc-400">{m.empId}</td>
-                  <td className="py-3 px-4">{m.dept}</td>
-                  <td className="py-3 px-4">
-                    <span className="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 font-medium">
-                      {m.role}
-                    </span>
-                  </td>
+                  <td className="py-3 px-4 font-medium text-zinc-900 dark:text-white">{m.dept}</td>
                   <td className="py-3 px-4">
                     <StatusBadge status={m.status} />
                   </td>
@@ -188,6 +225,15 @@ export default function MembersPage() {
                       >
                         <QrCode className="h-3.5 w-3.5" />
                       </Link>
+
+                      {/* Reset Pass Button */}
+                      <button
+                        onClick={() => handleOpenResetPass(m)}
+                        className="p-1.5 rounded bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 dark:hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30 transition-colors"
+                        title="Reset Member Password"
+                      >
+                        <KeyRound className="h-3.5 w-3.5" />
+                      </button>
 
                       {/* Edit Button */}
                       <button
@@ -234,7 +280,7 @@ export default function MembersPage() {
 
             <form onSubmit={handleSaveEdit} className="space-y-3 text-xs">
               <div>
-                <label className="text-zinc-700 dark:text-zinc-400 font-medium block mb-1">Full Name</label>
+                <label className="text-zinc-700 dark:text-zinc-400 font-medium block mb-1">Member Full Name</label>
                 <input
                   type="text"
                   value={editName}
@@ -245,70 +291,128 @@ export default function MembersPage() {
               </div>
 
               <div>
-                <label className="text-zinc-700 dark:text-zinc-400 font-medium block mb-1">Email Address</label>
+                <label className="text-zinc-700 dark:text-zinc-400 font-medium block mb-1">Employee / Student ID</label>
                 <input
-                  type="email"
-                  value={editEmail}
-                  onChange={(e) => setEditEmail(e.target.value)}
-                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-white"
+                  type="text"
+                  value={editEmpId}
+                  onChange={(e) => setEditEmpId(e.target.value)}
+                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-white font-mono"
                   required
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-zinc-700 dark:text-zinc-400 font-medium block mb-1">Employee ID</label>
-                  <input
-                    type="text"
-                    value={editEmpId}
-                    onChange={(e) => setEditEmpId(e.target.value)}
-                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-white font-mono"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="text-zinc-700 dark:text-zinc-400 font-medium block mb-1">Department</label>
-                  <select
-                    value={editDept}
-                    onChange={(e) => setEditDept(e.target.value)}
-                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-white"
-                  >
-                    <option value="Engineering">Engineering</option>
-                    <option value="Human Resources">Human Resources</option>
-                    <option value="Computer Science">Computer Science</option>
-                    <option value="Sales & Marketing">Sales & Marketing</option>
-                    <option value="Supply Chain">Supply Chain</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-zinc-700 dark:text-zinc-400 font-medium block mb-1">System Role</label>
-                <select
-                  value={editRole}
-                  onChange={(e) => setEditRole(e.target.value)}
-                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-white"
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const target = editingMember;
+                    setEditingMember(null);
+                    handleOpenResetPass(target);
+                  }}
+                  className="w-full py-2 px-3 bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 dark:hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
                 >
-                  <option value="Member">Member</option>
-                  <option value="Manager">Department Manager</option>
-                  <option value="Admin">Organization Admin</option>
-                </select>
+                  <KeyRound className="h-3.5 w-3.5" />
+                  Reset Member Password
+                </button>
               </div>
 
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex justify-end gap-2 pt-3 border-t border-zinc-200 dark:border-zinc-800">
                 <button
                   type="button"
                   onClick={() => setEditingMember(null)}
-                  className="px-3.5 py-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg font-medium text-zinc-700 dark:text-zinc-300"
+                  className="px-3.5 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg text-xs font-semibold text-zinc-700 dark:text-zinc-300 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg font-semibold text-white shadow-lg shadow-indigo-600/20"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-semibold text-white shadow-lg shadow-indigo-600/20 transition-all"
                 >
-                  <Save className="h-3.5 w-3.5" /> Save Changes
+                  <Save className="h-3.5 w-3.5" />
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Password Modal */}
+      {resetPassMember && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3">
+              <h3 className="text-base font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                <KeyRound className="h-5 w-5 text-amber-500" />
+                Reset Member Password
+              </h3>
+              <button
+                type="button"
+                onClick={() => setResetPassMember(null)}
+                className="p-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="p-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl space-y-0.5">
+              <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider block">Target Member</span>
+              <span className="text-sm font-bold text-zinc-900 dark:text-white block">{resetPassMember.name}</span>
+              <span className="text-xs text-zinc-500 block font-mono">{resetPassMember.email}</span>
+            </div>
+
+            <form onSubmit={handleConfirmResetPass} className="space-y-4 text-xs">
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-zinc-700 dark:text-zinc-400 font-bold">New Temporary Password</label>
+                  <button
+                    type="button"
+                    onClick={handleGenerateRandomPass}
+                    className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <RefreshCw className="h-3 w-3" /> Auto-Generate
+                  </button>
+                </div>
+
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-xl text-sm font-mono text-indigo-600 dark:text-indigo-400 font-bold focus:outline-none focus:border-indigo-500"
+                    required
+                  />
+                  <Lock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="sendEmailNotifyCheck"
+                  checked={sendEmailNotify}
+                  onChange={(e) => setSendEmailNotify(e.target.checked)}
+                  className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-700 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                />
+                <label htmlFor="sendEmailNotifyCheck" className="text-xs text-zinc-700 dark:text-zinc-300 cursor-pointer select-none">
+                  Email new password credentials directly to member
+                </label>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-zinc-200 dark:border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => setResetPassMember(null)}
+                  className="px-4 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-xl text-xs font-semibold text-zinc-700 dark:text-zinc-300 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-600 hover:bg-amber-500 rounded-xl text-xs font-bold text-white shadow-lg shadow-amber-600/20 transition-all cursor-pointer"
+                >
+                  <KeyRound className="h-3.5 w-3.5" />
+                  Confirm Password Reset
                 </button>
               </div>
             </form>
@@ -317,13 +421,15 @@ export default function MembersPage() {
       )}
 
       {/* Delete Confirmation Modal */}
-      <DeleteConfirmModal
-        isOpen={!!deletingMember}
-        title="Delete Member Profile"
-        description={`Are you sure you want to delete ${deletingMember?.name} (${deletingMember?.empId}) from ${activeOrgName}? This action cannot be undone.`}
-        onConfirm={handleConfirmDelete}
-        onClose={() => setDeletingMember(null)}
-      />
+      {deletingMember && (
+        <DeleteConfirmModal
+          isOpen={!!deletingMember}
+          title={`Delete ${deletingMember.name}?`}
+          description={`Are you sure you want to remove ${deletingMember.name} (${deletingMember.empId}) from ${activeOrgName}? Their active attendance pass will be permanently revoked.`}
+          onConfirm={handleConfirmDelete}
+          onClose={() => setDeletingMember(null)}
+        />
+      )}
     </div>
   );
 }

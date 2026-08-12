@@ -32,7 +32,7 @@ export function Sidebar({ orgId = "acme-corp", isSuperAdmin = false }: SidebarPr
   const router = useRouter();
   const { data: session } = useSession();
   const logoutMutation = useLogout();
-  const { portalMode, togglePortalMode, isSuperAdminUser: isSuperStore, setIsSuperAdminUser } = useUIStore();
+  const { portalMode, togglePortalMode, isSuperAdminUser: isSuperStore, setIsSuperAdminUser, activeOrgSlug } = useUIStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -40,6 +40,15 @@ export function Sidebar({ orgId = "acme-corp", isSuperAdmin = false }: SidebarPr
   }, []);
 
   const currentUser = session?.user;
+  const userOrganizations = session?.organizations || [];
+  const currentMembership = userOrganizations.find(
+    (m) => m.orgSlug === activeOrgSlug || m.orgId === activeOrgSlug
+  ) || userOrganizations[0];
+
+  const userRole = isSuperAdmin || (currentUser?.globalRole as string)?.toUpperCase() === "SUPER_ADMIN" || currentUser?.email === "admin@unite-attendance.com"
+    ? "ORG_ADMIN"
+    : (currentMembership?.role as string)?.toUpperCase() || (currentUser as any)?.role || "ORG_ADMIN";
+
   const isSuperUser =
     isSuperAdmin ||
     isSuperStore ||
@@ -82,28 +91,45 @@ export function Sidebar({ orgId = "acme-corp", isSuperAdmin = false }: SidebarPr
 
   const orgAdminNav = [
     { name: "Dashboard", href: `/dashboard`, icon: LayoutDashboard },
-    { name: "Attendance Feed", href: `/attendance`, icon: CalendarCheck },
-    { name: "Attendance Rules", href: `/attendance/rules`, icon: ShieldAlert },
+    { name: "Attendance", href: `/attendance`, icon: CalendarCheck },
     { name: "Branches", href: `/branches`, icon: GitBranch },
     { name: "Departments", href: `/departments`, icon: Building2 },
     { name: "Members", href: `/members`, icon: Users },
-    { name: "QR Management", href: `/qr-management`, icon: QrCode },
+    { name: "QR Passes", href: `/qr-management`, icon: QrCode },
     { name: "Reports", href: `/reports`, icon: FileBarChart },
     { name: "Settings", href: `/settings`, icon: Settings },
   ];
+
+  const filteredOrgAdminNav = orgAdminNav.filter((item) => {
+    if (userRole === "ORG_ADMIN" || isSuperUser) return true;
+
+    if (userRole === "BRANCH_MANAGER") {
+      return ["/dashboard", "/attendance", "/branches", "/qr-management", "/reports"].includes(item.href);
+    }
+
+    if (userRole === "DEPT_HEAD") {
+      return ["/dashboard", "/attendance", "/departments", "/reports"].includes(item.href);
+    }
+
+    if (userRole === "MEMBER") {
+      return ["/dashboard", "/attendance"].includes(item.href);
+    }
+
+    return true;
+  });
 
   const superAdminNav = [
     { name: "Platform Overview", href: `/super-admin/dashboard`, icon: LayoutDashboard },
     { name: "Organizations", href: `/super-admin/organizations`, icon: Building2 },
     { name: "Aura AI Control", href: `/super-admin/aura`, icon: Sparkles },
     { name: "Global Audit Logs", href: `/super-admin/audit-logs`, icon: Shield },
-    { name: "Global Members", href: `/members`, icon: Users },
-    { name: "Global Settings", href: `/settings`, icon: Settings },
+    { name: "Global Members", href: `/super-admin/members`, icon: Users },
+    { name: "Global Settings", href: `/super-admin/settings`, icon: Settings },
   ];
 
   const activePortalMode = mounted ? portalMode : "ORG";
   const isSuperActive = isSuperUser && activePortalMode === "SUPER";
-  const navItems = isSuperActive ? superAdminNav : orgAdminNav;
+  const navItems = isSuperActive ? superAdminNav : filteredOrgAdminNav;
 
   return (
     <aside className="w-64 border-r border-zinc-200 dark:border-zinc-800 bg-white/90 dark:bg-zinc-950/80 backdrop-blur-xl flex flex-col fixed inset-y-0 z-50 transition-colors duration-200">

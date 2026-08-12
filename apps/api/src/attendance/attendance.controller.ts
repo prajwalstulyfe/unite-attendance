@@ -18,7 +18,7 @@ export class AttendanceController {
   }
 
   @Post('organizations/:orgId/attendance/manual')
-  @Roles(OrgRole.ORG_ADMIN, OrgRole.MANAGER)
+  @Roles(OrgRole.ORG_ADMIN, (OrgRole as any).BRANCH_MANAGER, (OrgRole as any).DEPT_HEAD)
   async manual(
     @Param('orgId') orgId: string,
     @Body() dto: ManualAttendanceDto,
@@ -29,14 +29,14 @@ export class AttendanceController {
   }
 
   @Get('organizations/:orgId/attendance/today')
-  @Roles(OrgRole.ORG_ADMIN, OrgRole.MANAGER, OrgRole.VIEWER)
+  @Roles(OrgRole.ORG_ADMIN, (OrgRole as any).BRANCH_MANAGER, (OrgRole as any).DEPT_HEAD, OrgRole.MEMBER)
   async getTodayStats(@Param('orgId') orgId: string) {
     const data = await this.attendanceService.getTodayStats(orgId);
     return { success: true, data, timestamp: new Date().toISOString() };
   }
 
   @Get('organizations/:orgId/attendance')
-  @Roles(OrgRole.ORG_ADMIN, OrgRole.MANAGER, OrgRole.VIEWER)
+  @Roles(OrgRole.ORG_ADMIN, (OrgRole as any).BRANCH_MANAGER, (OrgRole as any).DEPT_HEAD, OrgRole.MEMBER)
   async findAll(
     @Param('orgId') orgId: string,
     @Query('page') page = 1,

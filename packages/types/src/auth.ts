@@ -49,6 +49,9 @@ export interface UserOrgMembership {
   orgLogo: string | null;
   role: OrgRole;
   memberId: string;
+  employeeId?: string | null;
+  designation?: string | null;
+  phone?: string | null;
   departmentName: string | null;
   branchName: string | null;
 }

@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { QrCode, CheckCircle2, XCircle, ShieldCheck, Camera, VideoOff, Lock, Sparkles, Key, Cpu, Wifi } from "lucide-react";
+import { QrCode, CheckCircle2, XCircle, ShieldCheck, Camera, VideoOff, Lock, Sparkles, Key, Cpu, Wifi, Users } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { PwaInstallButton } from "@/components/pwa-install-button";
 import { Html5Qrcode } from "html5-qrcode";
 import { toast } from "sonner";
-import { useScanAttendance } from "@repo/api-client";
+import { useScanAttendance, useTodayStats, useAttendanceRecords } from "@repo/api-client";
 
 interface ScanResultOverlay {
   status: "VALID" | "INVALID" | "FLAGGED";
@@ -22,16 +22,18 @@ interface ScanResultOverlay {
 interface KioskTerminal {
   id: string;
   name: string;
-  branch: string;
   restrictedDept?: string | null;
 }
 
 function KioskContent() {
   const searchParams = useSearchParams();
   const rawDept = searchParams.get("dept") || searchParams.get("deptId");
+  const urlDeptName = searchParams.get("deptName");
+  const urlOrgName = searchParams.get("orgName") || searchParams.get("org");
+  const urlOrgSlug = searchParams.get("orgSlug") || "";
+  const displayOrgName = urlOrgName && urlOrgName.trim() ? urlOrgName : "Unite Attendance";
 
   const [scanResult, setScanResult] = useState<ScanResultOverlay | null>(null);
-  const [scanCountToday, setScanCountToday] = useState(148);
   const [currentTime, setCurrentTime] = useState("");
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
@@ -40,28 +42,36 @@ function KioskContent() {
 
   const { mutateAsync: scanAttendanceApi } = useScanAttendance();
 
-  // Department ID to Name map
-  const deptMap: Record<string, string> = {
-    dept_01: "Engineering",
-    dept_02: "Human Resources",
-    dept_03: "Sales & Marketing",
-    dept_04: "Operations",
-  };
+  // Live attendance stats from API (auto-polls every 30s)
+  const { data: todayStats } = useTodayStats(urlOrgSlug);
+  // Live attendance records for scan count
+  const { data: attendanceData } = useAttendanceRecords(urlOrgSlug, { pageSize: 1 });
 
-  // If dept / deptId query param is present, lock terminal strictly to that department
+  // Live scan count derived from API
+  const liveScanCount = todayStats?.present ?? attendanceData?.pagination?.total ?? 0;
+
+  // Lock terminal to department name extracted from URL query params
   useEffect(() => {
     if (rawDept) {
-      const deptName = deptMap[rawDept] || rawDept.charAt(0).toUpperCase() + rawDept.slice(1).replace(/-/g, " ");
+      let resolvedDeptName = "Department";
+      if (urlDeptName && urlDeptName.trim()) {
+        resolvedDeptName = urlDeptName.trim();
+      } else {
+        const isRawUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawDept);
+        if (!isRawUuid) {
+          resolvedDeptName = rawDept.charAt(0).toUpperCase() + rawDept.slice(1).replace(/-/g, " ");
+        }
+      }
+
       setActiveTerminal({
-        id: `term-dept-${rawDept}`,
-        name: `Department Kiosk (${deptName})`,
-        branch: "Indiranagar HQ",
-        restrictedDept: deptName,
+        id: rawDept,
+        name: `${resolvedDeptName} Department Kiosk`,
+        restrictedDept: resolvedDeptName,
       });
     } else {
       setActiveTerminal(null);
     }
-  }, [rawDept]);
+  }, [rawDept, urlDeptName]);
 
   // Live time ticker
   useEffect(() => {
@@ -142,7 +152,7 @@ function KioskContent() {
           userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "Kiosk-Browser",
           platform: typeof navigator !== "undefined" ? navigator.platform : "Kiosk-OS",
           kioskId: activeTerminal.id,
-          branch: activeTerminal.branch,
+          branch: activeTerminal.restrictedDept || "Main",
           restrictedDept: activeTerminal.restrictedDept || undefined,
         },
       });
@@ -156,54 +166,31 @@ function KioskContent() {
           time: now,
           message: apiResult.message,
         });
-        setScanCountToday((prev) => prev + 1);
         setTimeout(() => {
           setScanResult(null);
           setIsScanning(false);
         }, 3200);
         return;
       }
-    } catch {
-      console.log("Evaluating via live kiosk engine fallback");
-    }
-
-    // Fallback live validation engine
-    const isEngineeringMember = decodedText.includes("UNITE_TOTP_EMP102") || decodedText.includes("QR_MEMBER_102");
-    const memberDept = isEngineeringMember ? "Engineering" : "Human Resources";
-    const memberName = isEngineeringMember ? "Jane Smith" : "Alice Johnson";
-
-    if (activeTerminal.restrictedDept && !memberDept.toLowerCase().includes(activeTerminal.restrictedDept.toLowerCase())) {
+    } catch (err) {
+      console.error("Scan API error:", err);
       setScanResult({
         status: "INVALID",
         type: "CHECK_IN",
-        name: memberName,
-        dept: memberDept,
+        name: "Unknown",
         time: now,
-        message: `Department Access Denied! Kiosk strictly locked to ${activeTerminal.restrictedDept} only.`,
+        message: "Scan failed. Please try again.",
       });
-      toast.error(`Access Denied: Kiosk restricted to ${activeTerminal.restrictedDept}`);
-    } else {
-      setScanResult({
-        status: "VALID",
-        type: "CHECK_IN",
-        name: memberName,
-        dept: memberDept,
-        time: now,
-        message: `Check-in verified successfully at ${activeTerminal.branch}`,
-      });
-      setScanCountToday((prev) => prev + 1);
-      toast.success(`Check-in Verified for ${memberName}!`);
+      setTimeout(() => {
+        setScanResult(null);
+        setIsScanning(false);
+      }, 3200);
     }
-
-    setTimeout(() => {
-      setScanResult(null);
-      setIsScanning(false);
-    }, 3200);
   };
 
   return (
-    <div className="h-screen w-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 flex flex-col justify-between overflow-hidden relative select-none transition-colors duration-200">
-      {/* Top Header Bar — Clean Mobile & Desktop Header */}
+    <div className="h-screen w-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 flex flex-col overflow-hidden relative select-none transition-colors duration-200">
+      {/* ═══ Top Header Bar ═══ */}
       <header className="h-16 sm:h-20 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border-b border-zinc-200 dark:border-zinc-800 px-4 sm:px-6 flex items-center justify-between z-30 shrink-0 shadow-sm">
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
           <img
@@ -212,11 +199,11 @@ function KioskContent() {
             className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl sm:rounded-2xl object-cover shadow-lg shadow-purple-500/20 border border-purple-500/20 shrink-0"
           />
           <div className="min-w-0">
-            <h1 className="text-xs sm:text-base font-extrabold tracking-tight text-zinc-900 dark:text-white truncate">Acme Corporation</h1>
+            <h1 className="text-xs sm:text-base font-extrabold tracking-tight text-zinc-900 dark:text-white truncate">{displayOrgName}</h1>
             {activeTerminal ? (
               <div className="text-[10px] sm:text-xs text-indigo-600 dark:text-indigo-400 font-semibold flex items-center gap-1 truncate">
                 <Lock className="h-3 w-3 text-amber-500 shrink-0" />
-                <span className="truncate">{activeTerminal.name}</span>
+                <span className="truncate">{activeTerminal.restrictedDept} Department Kiosk</span>
               </div>
             ) : (
               <span className="text-[10px] sm:text-xs text-indigo-600 dark:text-indigo-400 font-semibold flex items-center gap-1">
@@ -229,20 +216,22 @@ function KioskContent() {
         <div className="flex items-center gap-2 sm:gap-4 shrink-0">
           <ThemeToggle />
           <div className="text-right hidden sm:block">
-            <p className="text-xl sm:text-2xl font-mono font-bold text-zinc-900 dark:text-white tracking-wider">{currentTime || "09:00:00 AM"}</p>
-            {activeTerminal && (
-              <p className="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400 font-medium">Scans Today: <span className="text-emerald-600 dark:text-emerald-400 font-bold">{scanCountToday}</span></p>
+            <p className="text-xl sm:text-2xl font-mono font-bold text-zinc-900 dark:text-white tracking-wider">{currentTime || "--:--:-- --"}</p>
+            {activeTerminal && todayStats && (
+              <div className="flex items-center justify-end gap-3 text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">
+                <span>Present: <strong className="text-emerald-600 dark:text-emerald-400">{todayStats.present ?? 0}</strong></span>
+                <span>Total: <strong className="text-zinc-700 dark:text-zinc-300">{todayStats.totalMembers ?? 0}</strong></span>
+              </div>
             )}
           </div>
         </div>
       </header>
 
-      {/* Main Container — Edge-to-Edge with Zero Padding or Margins */}
-      <main className="flex-1 flex flex-col items-center justify-center relative overflow-hidden bg-zinc-50 dark:bg-zinc-950 p-0 m-0">
-        {/* CASE 1: NO DEPT ID IN URL — WELCOMING KIOSK SCANNER LANDING PAGE */}
+      {/* ═══ Main Content ═══ */}
+      <main className="flex-1 flex items-center justify-center relative overflow-hidden bg-zinc-50 dark:bg-zinc-950">
+        {/* CASE 1: NO DEPT ID — Landing Page */}
         {!activeTerminal ? (
-          <div className="max-w-md sm:max-w-xl w-full text-center space-y-4 sm:space-y-6 z-10 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-2xl my-auto mx-4">
-            {/* Glowing Logo Icon */}
+          <div className="max-w-md sm:max-w-xl w-full text-center space-y-4 sm:space-y-6 z-10 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-2xl mx-4">
             <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-3xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mx-auto shadow-xl shadow-indigo-500/10 relative">
               <QrCode className="h-8 w-8 sm:h-10 sm:w-10" />
               <div className="absolute -top-1 -right-1 h-5 w-5 sm:h-6 sm:w-6 rounded-full bg-amber-500 text-zinc-950 flex items-center justify-center text-xs font-bold shadow-md">
@@ -259,7 +248,6 @@ function KioskContent() {
               </p>
             </div>
 
-            {/* Instruction Callout Box */}
             <div className="p-4 sm:p-5 rounded-2xl bg-indigo-50/80 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-left space-y-1.5">
               <div className="flex items-center gap-2 text-indigo-700 dark:text-indigo-300 font-extrabold text-xs">
                 <Key className="h-4 w-4 text-amber-500" />
@@ -270,7 +258,6 @@ function KioskContent() {
               </p>
             </div>
 
-            {/* System Status Badges */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 pt-1 sm:pt-2">
               <div className="p-2.5 sm:p-3 rounded-2xl bg-zinc-100/80 dark:bg-zinc-950/80 border border-zinc-200 dark:border-zinc-800 text-center space-y-0.5">
                 <Lock className="h-4 w-4 text-amber-500 mx-auto" />
@@ -290,57 +277,93 @@ function KioskContent() {
             </div>
           </div>
         ) : (
-          /* CASE 2: DEPT ID IS PRESENT — DEDICATED FULL-SCREEN EDGE-TO-EDGE DEPARTMENT SCANNER */
+          /* CASE 2: DEPT PRESENT — Full-Screen Scanner */
           <>
-            {/* Full-Screen Edge-to-Edge WebCam Video Element */}
+            {/* Full-Screen WebCam Element — absolute, covers entire main */}
             <div
               id="kiosk-camera-reader"
-              className={`absolute inset-0 w-full h-full object-cover overflow-hidden pointer-events-none ${isCameraActive ? "block" : "hidden"}`}
+              className={`absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-10 [&_video]:w-full [&_video]:h-full [&_video]:object-cover ${isCameraActive ? "block" : "hidden"}`}
             />
 
-            {/* Ambient Background Grid when Camera is Inactive */}
+            {/* Ambient grid when camera inactive */}
             {!isCameraActive && (
-              <div className="absolute inset-0 bg-[radial-gradient(#6366f1_1px,transparent_1px)] [background-size:24px_24px] opacity-15 dark:opacity-20" />
+              <div className="absolute inset-0 bg-[radial-gradient(#6366f1_1px,transparent_1px)] bg-size-[24px_24px] opacity-15 dark:opacity-20" />
             )}
 
-            {/* ABSOLUTE FLUID RESPONSIVE SCANNER BRACKETS — max-w-[85vw] max-h-[85vw] */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[18rem] h-[18rem] sm:w-[24rem] sm:h-[24rem] md:w-[26rem] md:h-[26rem] max-w-[85vw] max-h-[85vw] pointer-events-none z-20 flex flex-col items-center justify-center">
-              {/* Outer Border */}
-              <div className="absolute inset-0 border-2 border-indigo-500/40 rounded-3xl" />
+            {/* Scanner Box + Button — flex column, button in normal flow below box */}
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none px-4">
+              {/* Scanner Brackets */}
+              <div className="w-[75vmin] h-[75vmin] sm:w-[58vh] sm:h-[58vh] max-w-xl max-h-128 flex flex-col items-center justify-center relative shrink-0">
+                {/* Outer Border */}
+                <div className="absolute inset-0 border-2 border-indigo-500/40 rounded-3xl" />
 
-              {/* Corner Brackets */}
-              <div className="absolute top-0 left-0 w-8 sm:w-12 h-8 sm:h-12 border-t-4 border-l-4 border-indigo-500 rounded-tl-3xl" />
-              <div className="absolute top-0 right-0 w-8 sm:w-12 h-8 sm:h-12 border-t-4 border-r-4 border-indigo-500 rounded-tr-3xl" />
-              <div className="absolute bottom-0 left-0 w-8 sm:w-12 h-8 sm:h-12 border-b-4 border-l-4 border-indigo-500 rounded-bl-3xl" />
-              <div className="absolute bottom-0 right-0 w-8 sm:w-12 h-8 sm:h-12 border-b-4 border-r-4 border-indigo-500 rounded-br-3xl" />
+                {/* Corner Brackets */}
+                <div className="absolute top-0 left-0 w-10 sm:w-14 h-10 sm:h-14 border-t-4 border-l-4 border-indigo-500 rounded-tl-3xl" />
+                <div className="absolute top-0 right-0 w-10 sm:w-14 h-10 sm:h-14 border-t-4 border-r-4 border-indigo-500 rounded-tr-3xl" />
+                <div className="absolute bottom-0 left-0 w-10 sm:w-14 h-10 sm:h-14 border-b-4 border-l-4 border-indigo-500 rounded-bl-3xl" />
+                <div className="absolute bottom-0 right-0 w-10 sm:w-14 h-10 sm:h-14 border-b-4 border-r-4 border-indigo-500 rounded-br-3xl" />
 
-              {/* Laser Line Effect */}
-              <motion.div
-                className="absolute inset-x-3 sm:inset-x-4 h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent shadow-[0_0_20px_#6366f1] z-20"
-                animate={{ top: ["5%", "90%", "5%"] }}
-                transition={{ repeat: Infinity, duration: 2.2, ease: "linear" }}
-              />
+                {/* Laser Line Effect */}
+                <motion.div
+                  className="absolute inset-x-3 sm:inset-x-4 h-1 bg-linear-to-r from-transparent via-indigo-500 to-transparent shadow-[0_0_20px_#6366f1] z-20"
+                  animate={{ top: ["5%", "90%", "5%"] }}
+                  transition={{ repeat: Infinity, duration: 2.2, ease: "linear" }}
+                />
 
-              {!isCameraActive ? (
-                <div className="text-center p-4 sm:p-6 space-y-3 sm:space-y-4 pointer-events-auto z-30 flex flex-col items-center justify-center">
-                  <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-lg shadow-indigo-500/10">
-                    <QrCode className="h-6 w-6 sm:h-7 sm:w-7" />
+                {!isCameraActive ? (
+                  <div className="text-center p-4 sm:p-6 space-y-3 sm:space-y-4 pointer-events-auto z-30 flex flex-col items-center justify-center">
+                    <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-lg shadow-indigo-500/10">
+                      <QrCode className="h-7 w-7 sm:h-8 sm:w-8" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg sm:text-xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
+                        Scan QR for {activeTerminal.restrictedDept}
+                      </h2>
+                      <p className="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 mt-1 max-w-xs mx-auto">
+                        Locked to {activeTerminal.restrictedDept} members only
+                      </p>
+                    </div>
+
+                    {/* Live Stats Badges */}
+                    {todayStats && (
+                      <div className="flex items-center gap-3 mt-2">
+                        <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">
+                          <Users className="h-3 w-3" />
+                          {todayStats.present}/{todayStats.totalMembers} Present
+                        </div>
+                        <div className="px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold">
+                          {todayStats.attendancePercentage ?? 0}% Rate
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div>
-                    <h2 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-white tracking-tight">
-                      Scan QR for {activeTerminal.restrictedDept}
-                    </h2>
-                    <p className="text-[10px] sm:text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 max-w-xs mx-auto">
-                      Locked to {activeTerminal.restrictedDept} Department members only
-                    </p>
+                ) : (
+                  <div className="absolute bottom-4 sm:bottom-5 px-4 py-1.5 rounded-full bg-white/90 dark:bg-zinc-900/90 border border-indigo-500/30 text-indigo-600 dark:text-indigo-400 text-[10px] sm:text-xs font-bold flex items-center gap-2 shadow-lg backdrop-blur-md z-30 pointer-events-auto">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-ping" />
+                    Scanning — Hold QR code steady
                   </div>
-                </div>
-              ) : (
-                <div className="absolute bottom-3 sm:bottom-4 px-3 sm:px-4 py-1.5 rounded-full bg-white/90 dark:bg-zinc-900/90 border border-indigo-500/30 text-indigo-600 dark:text-indigo-400 text-[10px] sm:text-xs font-bold flex items-center gap-2 shadow-lg backdrop-blur-md z-30 pointer-events-auto">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-ping" />
-                  Scanning — Hold QR code steady
-                </div>
-              )}
+                )}
+              </div>
+
+              {/* Activate / Pause Button — in normal flow, margin below box */}
+              <button
+                onClick={toggleCameraScanner}
+                className={`mt-6 sm:mt-8 px-6 sm:px-8 py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm font-extrabold transition-all shadow-xl flex items-center gap-2 sm:gap-2.5 active:scale-95 pointer-events-auto shrink-0 ${
+                  isCameraActive
+                    ? "bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/30"
+                    : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/30"
+                }`}
+              >
+                {isCameraActive ? (
+                  <>
+                    <VideoOff className="h-4 w-4" /> Pause Live Scanner
+                  </>
+                ) : (
+                  <>
+                    <Camera className="h-4 w-4" /> Activate Live Camera Scanner
+                  </>
+                )}
+              </button>
             </div>
           </>
         )}
@@ -380,44 +403,19 @@ function KioskContent() {
         </AnimatePresence>
       </main>
 
-      {/* Footer Bar with PwaInstallButton Moved to Bottom Bar for All Views */}
-      <footer className="h-16 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border-t border-zinc-200 dark:border-zinc-800 px-4 sm:px-6 flex items-center justify-between z-30 shrink-0 text-zinc-600 dark:text-zinc-400 gap-2">
-        {/* Left Column: Terminal info */}
+      {/* ═══ Footer Bar ═══ */}
+      <footer className="h-12 sm:h-14 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border-t border-zinc-200 dark:border-zinc-800 px-4 sm:px-6 flex items-center justify-between z-30 shrink-0 text-zinc-600 dark:text-zinc-400 gap-2">
+        {/* Left: Terminal info */}
         <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs truncate min-w-0">
           <ShieldCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-indigo-500 dark:text-indigo-400 shrink-0" />
-          <span className="truncate">
-            Terminal: <strong className="font-semibold">{activeTerminal ? activeTerminal.branch : "Indiranagar HQ"}</strong>
+          <span className="truncate font-medium">
+            {activeTerminal ? `${activeTerminal.restrictedDept} • ${displayOrgName}` : `${displayOrgName} Kiosk`}
           </span>
         </div>
 
-        {/* Center Column: Live Scanner CTA button */}
-        <div className="flex items-center justify-center shrink-0">
-          {activeTerminal && (
-            <button
-              onClick={toggleCameraScanner}
-              className={`px-4 sm:px-7 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl text-[11px] sm:text-xs font-extrabold transition-all shadow-xl flex items-center gap-1.5 sm:gap-2.5 active:scale-95 ${
-                isCameraActive
-                  ? "bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/30"
-                  : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/30"
-              }`}
-            >
-              {isCameraActive ? (
-                <>
-                  <VideoOff className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">Pause Live Scanner</span><span className="sm:hidden">Pause</span>
-                </>
-              ) : (
-                <>
-                  <Camera className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">Activate Live Camera Scanner</span><span className="sm:hidden">Start Scanner</span>
-                </>
-              )}
-            </button>
-          )}
-        </div>
-
-        {/* Right Column: PWA Install Button & Kiosk ID */}
-        <div className="flex items-center gap-2 justify-end text-[10px] text-zinc-400 dark:text-zinc-500 font-mono shrink-0">
+        {/* Right: PWA Install */}
+        <div className="flex items-center gap-2 justify-end shrink-0">
           <PwaInstallButton />
-          <span className="hidden md:inline">KIOSK-ID: {activeTerminal ? activeTerminal.id.toUpperCase() : "KIOSK-SYSTEM"}</span>
         </div>
       </footer>
     </div>

@@ -19,10 +19,10 @@ export { QueryProvider } from './providers/query-provider';
 export { useSession, useLogin, useRegister, useGoogleLogin, useLogout, authKeys } from './hooks/use-auth';
 
 // Organization hooks
-export { useOrganizations, useOrganization, useCreateOrganization, useUpdateOrganization, orgKeys } from './hooks/use-organizations';
+export { useOrganizations, useOrganization, useCreateOrganization, useUpdateOrganization, useSuperAdminDashboard, orgKeys } from './hooks/use-organizations';
 
 // Member hooks
-export { useMembers, useMember, useCreateMember, useUpdateMember, useDeleteMember, useBulkImportMembers, memberKeys } from './hooks/use-members';
+export { useMembers, useMember, useCreateMember, useUpdateMember, useDeleteMember, useBulkImportMembers, useResetPassword, memberKeys } from './hooks/use-members';
 
 // Attendance hooks
 export { useTodayStats, useAttendanceRecords, useMemberAttendance, useScanAttendance, useManualAttendance, attendanceKeys } from './hooks/use-attendance';

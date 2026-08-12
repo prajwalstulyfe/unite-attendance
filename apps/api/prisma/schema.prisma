@@ -83,7 +83,8 @@ model OrgMember {
 
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  department   Department?  @relation(fields: [departmentId], references: [id])
+  department        Department?  @relation("DeptMembers", fields: [departmentId], references: [id])
+  headedDepartments Department[] @relation("DeptHead")
   branch       Branch?      @relation(fields: [branchId], references: [id])
 
   qrCodes           QRCode[]
@@ -99,10 +100,10 @@ model OrgMember {
 }
 
 enum OrgRole {
-  ORG_ADMIN @map("org_admin")
-  MANAGER   @map("manager")
-  VIEWER    @map("viewer")
-  MEMBER    @map("member")
+  ORG_ADMIN      @map("org_admin")
+  BRANCH_MANAGER @map("branch_manager")
+  DEPT_HEAD      @map("dept_head")
+  MEMBER         @map("member")
 
   @@map("org_role")
 }
@@ -130,12 +131,14 @@ model Department {
   id        String   @id @default(uuid()) @db.Uuid
   orgId     String   @map("org_id") @db.Uuid
   branchId  String?  @map("branch_id") @db.Uuid
+  headId    String?  @map("head_id") @db.Uuid
   name      String
   createdAt DateTime @default(now()) @map("created_at")
 
   organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
   branch       Branch?      @relation(fields: [branchId], references: [id])
-  members      OrgMember[]
+  head         OrgMember?   @relation("DeptHead", fields: [headId], references: [id])
+  members      OrgMember[]  @relation("DeptMembers")
 
   @@index([orgId])
   @@map("departments")

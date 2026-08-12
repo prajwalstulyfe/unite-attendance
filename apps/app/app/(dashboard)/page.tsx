@@ -25,7 +25,7 @@ export default function MemberHomePage() {
 
   const orgName = primaryOrg?.orgName || "Organization";
   const departmentName = primaryOrg?.departmentName || "General";
-  const empId = primaryOrg?.memberId || `EMP-${user?.id?.slice(0, 6).toUpperCase() || "101"}`;
+  const empId = primaryOrg?.employeeId || (memberId.startsWith("EMP") ? memberId : `EMP-${memberId.slice(-4).toUpperCase()}`);
 
   // Process today's attendance record if present in summary
   const records = attendanceSummary?.records || [];
@@ -46,7 +46,7 @@ export default function MemberHomePage() {
       {/* Top Mobile Header — Glassmorphic Card */}
       <div className="flex items-center justify-between p-3.5 rounded-3xl bg-white/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-zinc-200 dark:border-zinc-800 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-white text-base shadow-lg shadow-indigo-500/20">
+          <div className="h-10 w-10 rounded-2xl bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-white text-base shadow-lg shadow-indigo-500/20">
             {userInitials}
           </div>
           <div>

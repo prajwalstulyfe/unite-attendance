@@ -74,3 +74,27 @@ export function useUpdateOrganization(orgId: string) {
     },
   });
 }
+
+/** Super Admin Platform Telemetry Dashboard Hook */
+export function useSuperAdminDashboard() {
+  return useQuery({
+    queryKey: ['super-admin', 'dashboard'],
+    queryFn: async () => {
+      const { data } = await apiClient.get<ApiResponse<{
+        totalOrganizations: number;
+        totalUsers: number;
+        totalMembers: number;
+        totalScansToday: number;
+        recentOrganizations: Array<{
+          id: string;
+          name: string;
+          slug: string;
+          plan: string;
+          createdAt: string;
+          totalMembers: number;
+        }>;
+      }>>('/super-admin/dashboard');
+      return data.data;
+    },
+  });
+}

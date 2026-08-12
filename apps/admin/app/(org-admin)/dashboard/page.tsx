@@ -8,15 +8,18 @@ import { useEffect, useState } from "react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { useUIStore } from "@/lib/use-ui-store";
 import { useTodayStats, useAttendanceRecords, useMembers } from "@repo/api-client";
+import { NoOrgSelected } from "@/components/no-org-selected";
 
 export default function DashboardPage() {
   const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const { activeOrgName, activeOrgSlug } = useUIStore();
+  const currentOrgSlug = activeOrgSlug;
+  const currentOrgName = activeOrgName || activeOrgSlug;
 
-  const { data: stats } = useTodayStats(activeOrgSlug);
-  const { data: attendanceData } = useAttendanceRecords(activeOrgSlug, { pageSize: 10 });
-  const { data: membersData } = useMembers(activeOrgSlug, { pageSize: 1 });
+  const { data: stats } = useTodayStats(currentOrgSlug);
+  const { data: attendanceData } = useAttendanceRecords(currentOrgSlug, { pageSize: 10 });
+  const { data: membersData } = useMembers(currentOrgSlug, { pageSize: 1 });
 
   useEffect(() => {
     setMounted(true);
@@ -24,11 +27,15 @@ export default function DashboardPage() {
 
   const isDark = !mounted || theme === "dark";
 
+  if (!activeOrgSlug) {
+    return <NoOrgSelected description="Please select an organization from the Organization Selector at the top to view its live attendance overview and telemetry." />;
+  }
+
   const totalMembers = membersData?.pagination?.total ?? stats?.totalMembers ?? 0;
   const presentToday = stats?.present ?? 0;
   const lateArrivals = stats?.late ?? 0;
-  const absentMembers = stats?.absent ?? (totalMembers > presentToday ? totalMembers - presentToday : 0);
-  const attendanceRate = stats?.attendancePercentage ?? (totalMembers > 0 ? Math.round((presentToday / totalMembers) * 100) : 0);
+  const absentMembers = stats?.absent ?? 0;
+  const attendanceRate = stats?.attendancePercentage ?? 0;
 
   const liveRecords = attendanceData?.items || [];
 
@@ -36,7 +43,7 @@ export default function DashboardPage() {
     <div className="space-y-8">
       <PageHeader
         title="Dashboard Overview"
-        description={`Real-time attendance telemetry and daily stats for ${activeOrgName}`}
+        description={`Real-time attendance telemetry and daily stats for ${currentOrgName}`}
         action={
           <div className="flex gap-3">
             <Link
@@ -49,7 +56,7 @@ export default function DashboardPage() {
               href="/qr-management"
               className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 text-xs font-semibold transition-all shadow-sm"
             >
-              <QrCode className="h-3.5 w-3.5" /> Bulk QR
+              <QrCode className="h-3.5 w-3.5" /> QR Passes
             </Link>
           </div>
         }
@@ -92,7 +99,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="text-base font-bold text-zinc-900 dark:text-white">Attendance Trend</h3>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400">Weekly breakdown of check-ins for {activeOrgName}</p>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400">Weekly breakdown of check-ins for {currentOrgName}</p>
             </div>
             <div className="flex items-center gap-4 text-xs">
               <span className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-400 font-medium">
@@ -150,14 +157,8 @@ export default function DashboardPage() {
             <span className="text-xs text-zinc-500">Real-time</span>
           </div>
 
-          <div className="flex-1 space-y-3 overflow-y-auto max-h-[300px]">
-            {liveRecords.length === 0 ? (
-              <div className="py-12 text-center space-y-2 text-zinc-500">
-                <Inbox className="h-8 w-8 text-zinc-400 mx-auto" />
-                <p className="text-xs font-semibold">No check-in activity today</p>
-                <p className="text-[11px] text-zinc-400">Live kiosk scans for {activeOrgName} will display here.</p>
-              </div>
-            ) : (
+          <div className="flex-1 space-y-3 overflow-y-auto max-h-75">
+            {liveRecords.length > 0 ? (
               liveRecords.map((item) => {
                 const memberName = item.member?.user?.name || "Member";
                 const dept = item.member?.department?.name || "General";
@@ -178,6 +179,12 @@ export default function DashboardPage() {
                   </div>
                 );
               })
+            ) : (
+              <div className="py-12 text-center space-y-2 text-zinc-500">
+                <Inbox className="h-8 w-8 text-zinc-400 mx-auto" />
+                <p className="text-xs font-semibold">No check-in activity recorded today</p>
+                <p className="text-[11px] text-zinc-400">Live kiosk scans for {currentOrgName} will display here in real-time.</p>
+              </div>
             )}
           </div>
 

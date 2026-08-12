@@ -163,6 +163,7 @@ export interface AttendanceQueryFilters {
   type?: AttendanceType;
   page?: number;
   pageSize?: number;
+  search?: string;
   sortBy?: 'timestamp' | 'memberName';
   sortOrder?: 'asc' | 'desc';
 }

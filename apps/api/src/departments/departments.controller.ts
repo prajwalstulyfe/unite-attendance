@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param } from '@nestjs/common';
 import { DepartmentsService } from './departments.service.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
 import { OrgRole } from '@prisma/client';
@@ -11,15 +11,26 @@ export class DepartmentsController {
   @Roles(OrgRole.ORG_ADMIN)
   async create(
     @Param('orgId') orgId: string,
-    @Body() body: { name: string; branchId?: string },
+    @Body() body: { name: string; branchId?: string; headId?: string },
   ) {
-    const data = await this.deptsService.create(orgId, body.name, body.branchId);
+    const data = await this.deptsService.create(orgId, body.name, body.branchId, body.headId);
     return { success: true, data, timestamp: new Date().toISOString() };
   }
 
   @Get()
   async findAll(@Param('orgId') orgId: string) {
     const data = await this.deptsService.findAll(orgId);
+    return { success: true, data, timestamp: new Date().toISOString() };
+  }
+
+  @Patch(':id')
+  @Roles(OrgRole.ORG_ADMIN)
+  async update(
+    @Param('orgId') orgId: string,
+    @Param('id') id: string,
+    @Body() body: { name?: string; branchId?: string; headId?: string | null },
+  ) {
+    const data = await this.deptsService.update(orgId, id, body);
     return { success: true, data, timestamp: new Date().toISOString() };
   }
 

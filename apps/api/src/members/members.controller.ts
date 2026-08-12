@@ -9,14 +9,14 @@ export class MembersController {
   constructor(private readonly membersService: MembersService) {}
 
   @Post()
-  @Roles(OrgRole.ORG_ADMIN, OrgRole.MANAGER)
+  @Roles(OrgRole.ORG_ADMIN, (OrgRole as any).BRANCH_MANAGER, (OrgRole as any).DEPT_HEAD)
   async create(@Param('orgId') orgId: string, @Body() dto: CreateMemberDto) {
     const data = await this.membersService.create(orgId, dto);
     return { success: true, data, timestamp: new Date().toISOString() };
   }
 
   @Get()
-  @Roles(OrgRole.ORG_ADMIN, OrgRole.MANAGER, OrgRole.VIEWER)
+  @Roles(OrgRole.ORG_ADMIN, (OrgRole as any).BRANCH_MANAGER, (OrgRole as any).DEPT_HEAD, OrgRole.MEMBER)
   async findAll(
     @Param('orgId') orgId: string,
     @Query('page') page = 1,
@@ -28,14 +28,14 @@ export class MembersController {
   }
 
   @Get(':id')
-  @Roles(OrgRole.ORG_ADMIN, OrgRole.MANAGER, OrgRole.VIEWER, OrgRole.MEMBER)
+  @Roles(OrgRole.ORG_ADMIN, (OrgRole as any).BRANCH_MANAGER, (OrgRole as any).DEPT_HEAD, OrgRole.MEMBER)
   async findOne(@Param('orgId') orgId: string, @Param('id') id: string) {
     const data = await this.membersService.findOne(orgId, id);
     return { success: true, data, timestamp: new Date().toISOString() };
   }
 
   @Patch(':id')
-  @Roles(OrgRole.ORG_ADMIN, OrgRole.MANAGER)
+  @Roles(OrgRole.ORG_ADMIN, (OrgRole as any).BRANCH_MANAGER, (OrgRole as any).DEPT_HEAD)
   async update(
     @Param('orgId') orgId: string,
     @Param('id') id: string,
@@ -49,6 +49,17 @@ export class MembersController {
   @Roles(OrgRole.ORG_ADMIN)
   async remove(@Param('orgId') orgId: string, @Param('id') id: string) {
     const data = await this.membersService.remove(orgId, id);
+    return { success: true, data, timestamp: new Date().toISOString() };
+  }
+
+  @Post(':id/reset-password')
+  @Roles(OrgRole.ORG_ADMIN, (OrgRole as any).BRANCH_MANAGER, (OrgRole as any).DEPT_HEAD)
+  async resetPassword(
+    @Param('orgId') orgId: string,
+    @Param('id') id: string,
+    @Body('password') password?: string,
+  ) {
+    const data = await this.membersService.resetPassword(orgId, id, password);
     return { success: true, data, timestamp: new Date().toISOString() };
   }
 }

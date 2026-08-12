@@ -55,8 +55,11 @@ export class OrganizationsService {
     return orgs.map((org) => ({
       ...org,
       totalMembers: org._count.members,
+      membersCount: org._count.members,
       totalBranches: org._count.branches,
+      branchesCount: org._count.branches,
       totalDepartments: org._count.departments,
+      departmentsCount: org._count.departments,
     }));
   }
 

@@ -12,7 +12,7 @@ export default function MemberQRPage() {
   const primaryOrg = session?.organizations?.[0];
 
   const userName = user?.name || user?.email?.split("@")[0] || "Member";
-  const empId = primaryOrg?.memberId || `EMP-${user?.id?.slice(0, 6).toUpperCase() || "101"}`;
+  const empId = primaryOrg?.employeeId || `EMP-${(primaryOrg?.memberId || user?.id || "").slice(-4).toUpperCase()}`;
   const departmentName = `${primaryOrg?.departmentName || "General"} • ${primaryOrg?.orgName || "Unite Attendance"}`;
 
   const [secondsRemaining, setSecondsRemaining] = useState(30);
@@ -72,7 +72,7 @@ export default function MemberQRPage() {
 
           <div className="w-full h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 transition-all duration-1000 ease-linear rounded-full"
+              className="h-full bg-linear-to-r from-indigo-500 to-purple-600 transition-all duration-1000 ease-linear rounded-full"
               style={{ width: `${(secondsRemaining / 30) * 100}%` }}
             />
           </div>
