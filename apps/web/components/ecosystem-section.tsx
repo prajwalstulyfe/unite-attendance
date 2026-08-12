@@ -8,7 +8,7 @@ export function EcosystemSection() {
 
   return (
     <section id="ecosystem" className="py-20 bg-zinc-100/60 dark:bg-zinc-900/40 border-t border-zinc-200 dark:border-zinc-800/80 transition-colors">
-      <div className="max-w-6xl mx-auto px-6">
+      <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-16 space-y-3">
           <span className="text-xs font-extrabold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Complete 3-App Platform</span>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight">The 3 Pillars of Unite Attendance</h2>

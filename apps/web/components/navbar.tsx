@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { ChevronDown, Building2, Monitor, Smartphone, ArrowRight, Menu, X } from "lucide-react";
 import { usePortalUrls } from "@/lib/use-portal-urls";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -12,13 +13,15 @@ export function Navbar() {
 
   return (
     <header className="h-16 md:h-20 border-b border-zinc-200 dark:border-zinc-800/80 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-xl fixed inset-x-0 top-0 z-50 transition-colors">
-      <div className="max-w-6xl mx-auto w-full h-full px-6 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto w-full h-full px-6 flex items-center justify-between">
         {/* Brand Logo & Title */}
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-          <img
+          <Image
             src="/uniteIcon.png"
             alt="Unite Attendance Logo"
-            className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-xl object-cover shadow-lg shadow-purple-500/30 border border-purple-500/20 flex-shrink-0"
+            width={40}
+            height={40}
+            className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-xl object-cover shadow-lg shadow-purple-500/30 border border-purple-500/20 shrink-0"
           />
           <span className="text-sm sm:text-base md:text-xl font-black tracking-tight text-zinc-900 dark:text-white truncate">
             Unite Attendance
@@ -35,7 +38,7 @@ export function Navbar() {
         </nav>
 
         {/* Action Buttons & Theme Toggle */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5 relative flex-shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 relative shrink-0">
           <ThemeToggle />
 
           {/* Portal Menu Dropdown */}

@@ -5,7 +5,7 @@ import { QrCode, ShieldCheck, BarChart3, Lock, Clock, FileSpreadsheet } from "lu
 export function FeatureGrid() {
   return (
     <section id="features" className="py-20 bg-zinc-50 dark:bg-zinc-950 transition-colors">
-      <div className="max-w-6xl mx-auto px-6">
+      <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-16 space-y-3">
           <span className="text-xs font-extrabold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Enterprise Features</span>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight">Everything Needed for Total Attendance Control</h2>

@@ -11,7 +11,7 @@ export function CtaSection() {
       {/* Subtle Ambient Glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-75 bg-indigo-500/10 dark:bg-indigo-500/10 blur-[140px] pointer-events-none rounded-full" />
 
-      <div className="max-w-6xl mx-auto px-6 relative z-10 text-center space-y-6">
+      <div className="max-w-7xl mx-auto px-6 relative z-10 text-center space-y-6">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs font-bold shadow-xs">
           <Sparkles className="h-3.5 w-3.5 text-indigo-500" /> Instant 10-Minute Setup
         </div>
