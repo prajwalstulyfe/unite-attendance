@@ -41,7 +41,7 @@ export function FaqSection() {
           <h2 className="text-3xl sm:text-4xl font-extrabold text-zinc-900 dark:text-white tracking-tight">Got Questions? We Have Answers</h2>
         </div>
 
-        <div className="space-y-4">
+        <div className="max-w-3xl mx-auto space-y-4">
           {faqs.map((faq, idx) => (
             <div key={idx} className="p-5 rounded-2xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-2">
               <button
