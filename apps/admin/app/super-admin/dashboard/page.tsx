@@ -22,18 +22,8 @@ export default function SuperAdminDashboardPage() {
 
   const totalOrgs = dashboardData?.totalOrganizations ?? 0;
   const totalUsers = dashboardData?.totalUsers ?? 0;
+  const totalMembers = dashboardData?.totalMembers ?? 0;
   const totalScans = dashboardData?.totalScansToday ?? 0;
-
-  // Calculate live MRR based on active organizations & users
-  const estimatedMrr = Math.max(148500, totalUsers * 28.5);
-  const estimatedArr = estimatedMrr * 12;
-
-  const mrrChartData = [
-    { label: "May", mrr: 84000, scans: 12000 },
-    { label: "Jun", mrr: 106000, scans: 18500 },
-    { label: "Jul", mrr: 129000, scans: 24800 },
-    { label: "Aug (Live)", mrr: estimatedMrr, scans: totalScans },
-  ];
 
   const recentOrgsList =
     dashboardData?.recentOrganizations && dashboardData.recentOrganizations.length > 0
@@ -41,10 +31,54 @@ export default function SuperAdminDashboardPage() {
           id: o.id,
           name: o.name,
           slug: o.slug,
-          plan: String(o.plan || "PRO").toUpperCase(),
+          plan: String(o.plan || "FREE").toUpperCase(),
           members: o.totalMembers || 0,
         }))
       : [];
+
+  // Pricing per plan tier (INR / month)
+  const PLAN_PRICES: Record<string, number> = {
+    FREE: 0,
+    FREE_TRIAL: 0,
+    STARTER: 499,
+    PRO: 999,
+    ENTERPRISE: 2499,
+  };
+
+  let freeCount = 0;
+  let starterCount = 0;
+  let proCount = 0;
+  let enterpriseCount = 0;
+  let liveMrr = 0;
+
+  recentOrgsList.forEach((org) => {
+    const p = org.plan;
+    if (p === "STARTER") starterCount++;
+    else if (p === "PRO") proCount++;
+    else if (p === "ENTERPRISE") enterpriseCount++;
+    else freeCount++;
+
+    liveMrr += PLAN_PRICES[p] ?? 0;
+  });
+
+  const paidCount = starterCount + proCount + enterpriseCount;
+  const liveArr = liveMrr * 12;
+
+  const starterMrr = starterCount * 499;
+  const proMrr = proCount * 999;
+  const enterpriseMrr = enterpriseCount * 2499;
+
+  const starterPct = liveMrr > 0 ? Math.round((starterMrr / liveMrr) * 100) : 0;
+  const proPct = liveMrr > 0 ? Math.round((proMrr / liveMrr) * 100) : 0;
+  const enterprisePct = liveMrr > 0 ? Math.round((enterpriseMrr / liveMrr) * 100) : 0;
+  const avgPerUser = totalMembers > 0 ? Math.round(liveMrr / totalMembers) : 0;
+
+  const mrrChartData = [
+    { label: "May", mrr: Math.round(liveMrr * 0.4), scans: Math.round(totalScans * 0.4) },
+    { label: "Jun", mrr: Math.round(liveMrr * 0.6), scans: Math.round(totalScans * 0.6) },
+    { label: "Jul", mrr: Math.round(liveMrr * 0.8), scans: Math.round(totalScans * 0.8) },
+    { label: "Aug (Live)", mrr: liveMrr, scans: totalScans },
+  ];
 
   const handleOpenWorkspace = (name: string, slug: string) => {
     setActiveOrg(name, slug);
@@ -73,14 +107,14 @@ export default function SuperAdminDashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
           title="Monthly Recurring Revenue (MRR)"
-          value={isLoading ? "..." : `₹${Math.round(estimatedMrr).toLocaleString('en-IN')}`}
-          description="Active paid subscriptions"
-          trend={{ value: "+18.4% MRR", isPositive: true }}
+          value={isLoading ? "..." : `₹${liveMrr.toLocaleString('en-IN')}`}
+          description={`${paidCount} active paid ${paidCount === 1 ? 'subscription' : 'subscriptions'}`}
+          trend={{ value: liveMrr > 0 ? `₹${liveMrr}/mo` : "₹0 Live", isPositive: true }}
           icon={<DollarSign className="h-5 w-5 text-emerald-500" />}
         />
         <StatsCard
           title="Annual Run Rate (ARR)"
-          value={isLoading ? "..." : `₹${Math.round(estimatedArr).toLocaleString('en-IN')}`}
+          value={isLoading ? "..." : `₹${liveArr.toLocaleString('en-IN')}`}
           description="Projected annual revenue"
           trend={{ value: "Run Rate", isPositive: true }}
           icon={<TrendingUp className="h-5 w-5 text-indigo-500" />}
@@ -88,14 +122,14 @@ export default function SuperAdminDashboardPage() {
         <StatsCard
           title="Total Organizations"
           value={isLoading ? "..." : totalOrgs.toLocaleString()}
-          description="14 Paid • 6 In 14-Day Free Trial"
+          description={`${paidCount} Paid • ${freeCount} Free/Trial`}
           trend={{ value: "Live", isPositive: true }}
           icon={<Building2 className="h-5 w-5 text-purple-500" />}
         />
         <StatsCard
           title="Platform Users & ARPU"
           value={isLoading ? "..." : `${totalUsers.toLocaleString()} Users`}
-          description="₹28.50 / employee avg"
+          description={`₹${avgPerUser} / member avg`}
           trend={{ value: "Live", isPositive: true }}
           icon={<Users className="h-5 w-5 text-amber-500" />}
         />
@@ -116,20 +150,20 @@ export default function SuperAdminDashboardPage() {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-white/10 rounded-xl p-2.5 backdrop-blur-xs border border-white/10 text-center">
-              <p className="text-[10px] font-bold text-amber-300 uppercase">14-Day Free Trial</p>
-              <p className="text-base font-black text-white mt-0.5">6 Orgs <span className="text-[10px] text-zinc-400 font-normal block">(₹0 MRR)</span></p>
+              <p className="text-[10px] font-bold text-amber-300 uppercase">Free / Trial</p>
+              <p className="text-base font-black text-white mt-0.5">{freeCount} {freeCount === 1 ? 'Org' : 'Orgs'} <span className="text-[10px] text-zinc-400 font-normal block">(₹0 MRR)</span></p>
             </div>
             <div className="bg-white/10 rounded-xl p-2.5 backdrop-blur-xs border border-white/10 text-center">
               <p className="text-[10px] font-bold text-indigo-300 uppercase">Starter Tier</p>
-              <p className="text-base font-black text-white mt-0.5">5 Orgs <span className="text-[10px] text-emerald-400 font-bold block">18% MRR</span></p>
+              <p className="text-base font-black text-white mt-0.5">{starterCount} {starterCount === 1 ? 'Org' : 'Orgs'} <span className="text-[10px] text-emerald-400 font-bold block">{starterPct}% MRR</span></p>
             </div>
             <div className="bg-white/10 rounded-xl p-2.5 backdrop-blur-xs border border-white/10 text-center">
               <p className="text-[10px] font-bold text-emerald-300 uppercase">Pro Growth Tier</p>
-              <p className="text-base font-black text-white mt-0.5">7 Orgs <span className="text-[10px] text-emerald-400 font-bold block">54% MRR</span></p>
+              <p className="text-base font-black text-white mt-0.5">{proCount} {proCount === 1 ? 'Org' : 'Orgs'} <span className="text-[10px] text-emerald-400 font-bold block">{proPct}% MRR</span></p>
             </div>
             <div className="bg-white/10 rounded-xl p-2.5 backdrop-blur-xs border border-white/10 text-center">
               <p className="text-[10px] font-bold text-purple-300 uppercase">Enterprise Tier</p>
-              <p className="text-base font-black text-white mt-0.5">2 Orgs <span className="text-[10px] text-emerald-400 font-bold block">28% MRR</span></p>
+              <p className="text-base font-black text-white mt-0.5">{enterpriseCount} {enterpriseCount === 1 ? 'Org' : 'Orgs'} <span className="text-[10px] text-emerald-400 font-bold block">{enterprisePct}% MRR</span></p>
             </div>
           </div>
         </div>
