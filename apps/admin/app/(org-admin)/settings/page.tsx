@@ -980,7 +980,7 @@ export default function SettingsPage() {
                       key={tier.name}
                       type="button"
                       onClick={() => setSelectedPlanIdx(idx)}
-                      className={`w-full px-3 py-2.5 rounded-xl border text-xs font-extrabold transition-all flex flex-col items-center gap-0.5 cursor-pointer relative ${
+                      className={`w-full px-2 py-2.5 rounded-xl border text-xs font-extrabold transition-all flex flex-col items-center gap-0.5 cursor-pointer relative ${
                         isSelected
                           ? "bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20"
                           : isCurrent
@@ -988,7 +988,10 @@ export default function SettingsPage() {
                           : "bg-zinc-50 dark:bg-zinc-950 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800/80 hover:border-zinc-300 dark:hover:border-zinc-700"
                       }`}
                     >
-                      <span>{tier.range}</span>
+                      <span className={`text-[9px] font-black uppercase tracking-tight ${isSelected ? "text-indigo-200" : isCurrent ? "text-indigo-600 dark:text-indigo-400" : "text-indigo-500"}`}>
+                        {tier.name.replace(" Pack", "")}
+                      </span>
+                      <span className="text-[11px] font-bold">{tier.range}</span>
                       <span className={`text-[10px] font-medium ${isSelected ? "text-indigo-100" : "text-zinc-500"}`}>
                         {tier.price}/mo
                       </span>

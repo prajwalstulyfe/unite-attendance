@@ -5,6 +5,7 @@ import { CheckCircle2, Sparkles, ShieldCheck, ArrowRight } from 'lucide-react';
 import { usePortalUrls } from '@/lib/use-portal-urls';
 
 interface PricingTier {
+  name: string;
   range: string;
   regularPrice: number;
   launchPrice: number;
@@ -15,6 +16,7 @@ interface PricingTier {
 
 const PRICING_TIERS: PricingTier[] = [
   {
+    name: 'Starter 10 Pack',
     range: 'Up to 10 Employees',
     regularPrice: 499,
     launchPrice: 375,
@@ -22,6 +24,7 @@ const PRICING_TIERS: PricingTier[] = [
     tagline: 'For small teams and micro businesses',
   },
   {
+    name: 'Starter 25 Pack',
     range: '11 – 25 Employees',
     regularPrice: 999,
     launchPrice: 749,
@@ -29,6 +32,7 @@ const PRICING_TIERS: PricingTier[] = [
     tagline: 'For growing offices & retail stores',
   },
   {
+    name: 'Business 50 Pack',
     range: '26 – 50 Employees',
     regularPrice: 1499,
     launchPrice: 1125,
@@ -36,6 +40,7 @@ const PRICING_TIERS: PricingTier[] = [
     tagline: 'For mid-size companies & departments',
   },
   {
+    name: 'Pro Growth 100 Pack',
     range: '51 – 100 Employees',
     regularPrice: 2499,
     launchPrice: 1875,
@@ -44,6 +49,7 @@ const PRICING_TIERS: PricingTier[] = [
     tagline: 'Most popular for multi-branch organizations',
   },
   {
+    name: 'Scale 200 Pack',
     range: '101 – 200 Employees',
     regularPrice: 3999,
     launchPrice: 2999,
@@ -51,6 +57,7 @@ const PRICING_TIERS: PricingTier[] = [
     tagline: 'For expanding enterprises & institutes',
   },
   {
+    name: 'Corporate 500 Pack',
     range: '201 – 500 Employees',
     regularPrice: 6999,
     launchPrice: 5249,
@@ -58,6 +65,7 @@ const PRICING_TIERS: PricingTier[] = [
     tagline: 'For factories & large corporate hubs',
   },
   {
+    name: 'Enterprise 1000 Pack',
     range: '501 – 1,000 Employees',
     regularPrice: 11999,
     launchPrice: 8999,
@@ -94,7 +102,7 @@ export function PricingSection() {
         <div className='bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-4 sm:p-6 shadow-xl max-w-4xl mx-auto space-y-5'>
           <div className='flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3'>
             <span className='text-xs font-extrabold uppercase tracking-wider text-zinc-500'>
-              Select Employee Strength
+              Select Plan & Employee Strength
             </span>
             <span className='text-xs font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1'>
               <ShieldCheck className='h-3.5 w-3.5' /> 14-Day Free Trial
@@ -120,7 +128,10 @@ export function PricingSection() {
                   </span>
                 )}
                 <div>
-                  <p className='text-[10px] font-bold leading-tight'>{tier.range.replace(' Employees', '')}</p>
+                  <p className={`text-[9px] font-black uppercase tracking-tight ${selectedTierIdx === idx ? 'text-indigo-200' : 'text-indigo-500 dark:text-indigo-400'}`}>
+                    {tier.name.replace(' Pack', '')}
+                  </p>
+                  <p className='text-[10px] font-bold leading-tight mt-0.5'>{tier.range.replace(' Employees', '')}</p>
                   <p
                     className={`text-[10px] font-semibold mt-0.5 ${selectedTierIdx === idx ? 'text-indigo-100' : 'text-zinc-500'}`}>
                     ₹{tier.launchPrice}/mo
@@ -134,7 +145,9 @@ export function PricingSection() {
           <div className='bg-linear-to-br from-indigo-900/10 via-purple-900/5 to-transparent border border-indigo-500/30 rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4'>
             <div className='space-y-1 text-center sm:text-left w-full sm:w-auto'>
               <div className='flex flex-wrap items-center gap-2 justify-center sm:justify-start'>
-                <h3 className='text-base sm:text-lg font-bold text-zinc-900 dark:text-white'>{activeTier.range}</h3>
+                <h3 className='text-base sm:text-lg font-black text-zinc-900 dark:text-white'>
+                  {activeTier.name} <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">({activeTier.range})</span>
+                </h3>
                 {activeTier.popular && (
                   <span className='px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-600 dark:text-amber-400 border border-amber-400/30 text-[9px] font-black uppercase tracking-wider'>
                     Most Popular
