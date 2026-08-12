@@ -20,19 +20,24 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     }
 
     try {
-      const result = await (super.canActivate(context) as Promise<boolean>);
-      if (result) return true;
-    } catch {
-      const req = context.switchToHttp().getRequest();
-      req.user = {
-        sub: 'dev_super_admin',
-        userId: 'dev_super_admin',
-        email: 'admin@unite-attendance.com',
-        globalRole: 'SUPER_ADMIN',
-      };
-      return true;
-    }
+      return (await super.canActivate(context)) as boolean;
+    } catch (err) {
+      const isDevBypass =
+        process.env['NODE_ENV'] === 'development' &&
+        process.env['ENABLE_DEV_AUTH_BYPASS'] === 'true';
 
-    return true;
+      if (isDevBypass) {
+        const req = context.switchToHttp().getRequest();
+        req.user = {
+          sub: 'dev_super_admin',
+          userId: 'dev_super_admin',
+          email: 'admin@unite-attendance.com',
+          globalRole: 'SUPER_ADMIN',
+        };
+        return true;
+      }
+
+      throw err;
+    }
   }
 }

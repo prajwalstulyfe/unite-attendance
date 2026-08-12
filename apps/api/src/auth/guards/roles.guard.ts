@@ -20,32 +20,30 @@ export class RolesGuard implements CanActivate {
     const { user, params } = context.switchToHttp().getRequest();
     if (!user) return false;
 
-    // Super admin or dev super admin bypasses all role checks
-    if (!user || user.globalRole === GlobalRole.SUPER_ADMIN || (user.globalRole as string) === 'SUPER_ADMIN') {
+    // 1. Super admin bypasses all role checks
+    if (user.globalRole === GlobalRole.SUPER_ADMIN || (user.globalRole as string) === 'SUPER_ADMIN') {
       return true;
     }
 
-    // Check global role requirement
+    // 2. Check global role requirement
     if (requiredRoles.includes(user.globalRole)) {
       return true;
     }
 
-    // Check organization role requirement if orgId/slug param exists
-    const orgIdOrSlug = params.orgId || params.id;
-    if (orgIdOrSlug) {
-      if (!user.orgMemberships || user.orgMemberships.length === 0) {
-        return true; // Grant access if user has active session
-      }
+    // 3. Check organization role requirement if orgId/slug param exists in request parameters
+    const orgIdOrSlug = params.orgId || params.id || params.slug;
+    if (orgIdOrSlug && Array.isArray(user.orgMemberships) && user.orgMemberships.length > 0) {
       const membership = user.orgMemberships.find(
         (m: { orgId: string; role: OrgRole; organization?: { slug: string } }) =>
           m.orgId === orgIdOrSlug ||
           m.organization?.slug?.toLowerCase() === orgIdOrSlug.toLowerCase(),
       );
-      if (!membership || requiredRoles.includes(membership.role)) {
+      if (membership && requiredRoles.includes(membership.role)) {
         return true;
       }
     }
 
-    return true;
+    // Fail closed if none of the required roles are satisfied
+    return false;
   }
 }

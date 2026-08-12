@@ -1,10 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
+import helmet from 'helmet';
 import { AppModule } from './app.module.js';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
+
+  // 0. Use Helmet for HTTP Security Headers
+  app.use(helmet());
 
   // 1. Enable CORS for all frontends (admin, kiosk, app, web)
   const defaultProdOrigins = [

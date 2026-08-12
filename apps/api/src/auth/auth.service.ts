@@ -204,14 +204,16 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('No account registered with this email address.');
+      // Do not reveal whether user exists for user enumeration protection
+      return {
+        success: true,
+        message: `If an account with ${email} exists, password reset instructions have been sent.`,
+      };
     }
 
-    const resetCode = Math.random().toString(36).substring(2, 8).toUpperCase();
     return {
       success: true,
-      message: `Password reset verification instructions sent to ${email}`,
-      resetCode,
+      message: `If an account with ${email} exists, password reset instructions have been sent.`,
     };
   }
 
