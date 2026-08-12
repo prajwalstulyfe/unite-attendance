@@ -145,9 +145,33 @@ function KioskContent() {
 
     const now = new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
 
+    let gpsLocation: { lat: number; lng: number; accuracy?: number } | undefined;
+
+    if (typeof navigator !== "undefined" && "geolocation" in navigator) {
+      try {
+        const pos = await new Promise<GeolocationPosition | null>((resolve) => {
+          navigator.geolocation.getCurrentPosition(
+            (position) => resolve(position),
+            () => resolve(null),
+            { timeout: 1200 }
+          );
+        });
+        if (pos) {
+          gpsLocation = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            accuracy: pos.coords.accuracy,
+          };
+        }
+      } catch {
+        // Geolocation error/timeout fallback
+      }
+    }
+
     try {
       const apiResult = await scanAttendanceApi({
         qrToken: decodedText,
+        gpsLocation,
         deviceInfo: {
           userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "Kiosk-Browser",
           platform: typeof navigator !== "undefined" ? navigator.platform : "Kiosk-OS",

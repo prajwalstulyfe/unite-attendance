@@ -30,7 +30,7 @@ export function WorkflowSection() {
 
   return (
     <section id="workflow" className="py-20 px-6 md:px-12 bg-zinc-100/60 dark:bg-zinc-900/40 border-t border-zinc-200 dark:border-zinc-800/80 transition-colors">
-      <div className="max-w-6xl mx-auto space-y-16">
+      <div className="max-w-7xl mx-auto space-y-16">
         <div className="text-center space-y-3 max-w-4xl mx-auto">
           <span className="text-xs font-extrabold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">10-Minute Onboarding</span>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-zinc-900 dark:text-white tracking-tight">Up & Running Before Your Next Shift Starts</h2>

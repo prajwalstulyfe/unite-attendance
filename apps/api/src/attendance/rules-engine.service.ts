@@ -62,18 +62,48 @@ export class RulesEngineService {
     const type: AttendanceType =
       lastScanToday?.type === 'CHECK_IN' ? 'CHECK_OUT' : 'CHECK_IN';
 
-    // 4. GPS validation (if rule requires it)
-    if (rule?.requireGps) {
-      if (!gpsLocation) {
+    // 4. GPS validation (Geofence radius check against rule locations & registered branches)
+    if (rule?.requireGps || gpsLocation) {
+      const allowedLocations: Array<{ lat: number; lng: number; radiusMeters?: number }> = [];
+
+      if (rule?.allowedLocations && Array.isArray(rule.allowedLocations)) {
+        (rule.allowedLocations as any[]).forEach((loc) => {
+          if (typeof loc?.lat === 'number' && typeof loc?.lng === 'number') {
+            allowedLocations.push({
+              lat: loc.lat,
+              lng: loc.lng,
+              radiusMeters: loc.radiusMeters || rule?.gpsRadiusMeters || 300,
+            });
+          }
+        });
+      }
+
+      // Query active org branches to include registered branch geofences
+      const branches = await this.prisma.branch.findMany({
+        where: { orgId, isActive: true },
+        select: { location: true },
+      });
+
+      branches.forEach((b) => {
+        const loc = b.location as any;
+        if (loc && typeof loc.lat === 'number' && typeof loc.lng === 'number') {
+          allowedLocations.push({
+            lat: loc.lat,
+            lng: loc.lng,
+            radiusMeters: loc.radiusMeters || rule?.gpsRadiusMeters || 300,
+          });
+        }
+      });
+
+      if (rule?.requireGps && !gpsLocation) {
         errors.push('GPS_REQUIRED');
-      } else if (rule.allowedLocations && Array.isArray(rule.allowedLocations)) {
-        const locations = rule.allowedLocations as Array<{ lat: number; lng: number; radiusMeters?: number }>;
-        const inRange = locations.some((loc) => {
+      } else if (gpsLocation && allowedLocations.length > 0) {
+        const inRange = allowedLocations.some((loc) => {
           const dist = this.haversineDistance(gpsLocation.lat, gpsLocation.lng, loc.lat, loc.lng);
-          return dist <= (loc.radiusMeters || rule.gpsRadiusMeters || 200);
+          return dist <= (loc.radiusMeters || 300);
         });
 
-        if (!inRange) {
+        if (!inRange && rule?.requireGps) {
           errors.push('OUT_OF_GPS_RANGE');
         }
       }
