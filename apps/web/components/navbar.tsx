@@ -11,7 +11,8 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="h-16 md:h-20 border-b border-zinc-200 dark:border-zinc-800/80 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-xl px-6 md:px-12 flex items-center justify-between fixed inset-x-0 top-0 z-50 transition-colors">
+    <header className="h-16 md:h-20 border-b border-zinc-200 dark:border-zinc-800/80 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-xl fixed inset-x-0 top-0 z-50 transition-colors">
+      <div className="max-w-6xl mx-auto w-full h-full px-6 flex items-center justify-between">
         {/* Brand Logo & Title */}
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
           <img
@@ -112,6 +113,7 @@ export function Navbar() {
             {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </button>
         </div>
+      </div>
 
       {/* Mobile Slide-Down Drawer Menu */}
       {mobileMenuOpen && (
