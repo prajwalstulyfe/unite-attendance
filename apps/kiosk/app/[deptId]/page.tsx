@@ -172,7 +172,7 @@ export default function DepartmentLockedKioskPage({
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 flex flex-col justify-between p-6 sm:p-8 relative overflow-hidden transition-colors duration-200">
+    <div className="h-dvh min-h-dvh max-h-dvh w-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 flex flex-col justify-between p-3 sm:p-8 relative overflow-hidden transition-colors duration-200">
       {/* Background Subtle Ambient Glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-500/10 rounded-full blur-[140px] pointer-events-none" />
 
@@ -216,7 +216,7 @@ export default function DepartmentLockedKioskPage({
         </div>
 
         {/* Central Scan Brackets & WebCam */}
-        <div className="relative w-full max-w-lg aspect-square flex items-center justify-center">
+        <div className="relative w-full max-w-[65vmin] sm:max-w-lg aspect-square flex items-center justify-center">
           {/* Outer Scanner Brackets */}
           <div className="absolute inset-0 border-2 border-indigo-500/30 rounded-3xl pointer-events-none" />
 
@@ -251,7 +251,7 @@ export default function DepartmentLockedKioskPage({
         </div>
 
         {/* Action Button */}
-        <div className="mt-6">
+        <div className="mt-2 sm:mt-6">
           <button
             onClick={toggleCameraScanner}
             className={`px-8 py-3.5 rounded-2xl text-xs font-extrabold transition-all shadow-lg flex items-center gap-2.5 ${
@@ -308,7 +308,7 @@ export default function DepartmentLockedKioskPage({
       </main>
 
       {/* Locked Kiosk Footer */}
-      <footer className="flex items-center justify-between text-xs text-zinc-400 z-10 max-w-6xl w-full mx-auto pt-2 border-t border-zinc-200 dark:border-zinc-800">
+      <footer className="flex items-center justify-between text-[10px] sm:text-xs text-zinc-400 z-10 max-w-6xl w-full mx-auto pt-2 pb-[env(safe-area-inset-bottom,0px)] border-t border-zinc-200 dark:border-zinc-800 shrink-0 gap-2">
         <span className="flex items-center gap-1.5">
           <Lock className="h-3.5 w-3.5 text-amber-500" /> Dept Terminal Locked: <strong>{deptName}</strong>
         </span>

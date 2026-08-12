@@ -40,14 +40,14 @@ export default function AppDashboardLayout({
   ];
 
   return (
-    <div className="min-h-screen bg-zinc-200 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 flex justify-center transition-colors duration-200">
+    <div className="h-dvh max-h-dvh bg-zinc-200 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 flex justify-center overflow-hidden transition-colors duration-200">
       {/* 1px Side Bordered Mobile Container Shell */}
-      <div className="w-full max-w-md min-h-screen bg-white dark:bg-zinc-900 border-x border-zinc-300 dark:border-zinc-800 flex flex-col justify-between relative shadow-xl overflow-hidden">
-        {/* Native Mobile Viewport Content */}
-        <main className="flex-1 p-4">{children}</main>
+      <div className="w-full max-w-md h-dvh max-h-dvh bg-white dark:bg-zinc-900 border-x border-zinc-300 dark:border-zinc-800 flex flex-col justify-between relative shadow-xl overflow-hidden">
+        {/* Native Mobile Viewport Content — Scrollable Area */}
+        <main className="flex-1 overflow-y-auto p-4 pb-24">{children}</main>
 
-        {/* Bottom Navigation Bar */}
-        <nav className="sticky bottom-0 inset-x-0 h-16 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-around px-4 z-50">
+        {/* Bottom Navigation Bar — Fixed at bottom with mobile safe-area support */}
+        <nav className="fixed sm:sticky bottom-0 inset-x-0 max-w-md mx-auto h-[calc(4rem+env(safe-area-inset-bottom,0px))] pb-[env(safe-area-inset-bottom,0px)] bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-around px-4 z-50 shadow-lg shrink-0">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             const Icon = item.icon;

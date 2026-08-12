@@ -189,7 +189,7 @@ function KioskContent() {
   };
 
   return (
-    <div className="h-screen w-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 flex flex-col overflow-hidden relative select-none transition-colors duration-200">
+    <div className="h-dvh min-h-dvh max-h-dvh w-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 flex flex-col overflow-hidden relative select-none transition-colors duration-200">
       {/* ═══ Top Header Bar ═══ */}
       <header className="h-16 sm:h-20 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border-b border-zinc-200 dark:border-zinc-800 px-4 sm:px-6 flex items-center justify-between z-30 shrink-0 shadow-sm">
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
@@ -293,7 +293,7 @@ function KioskContent() {
             {/* Scanner Box + Button — flex column, button in normal flow below box */}
             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none px-4">
               {/* Scanner Brackets */}
-              <div className="w-[75vmin] h-[75vmin] sm:w-[58vh] sm:h-[58vh] max-w-xl max-h-128 flex flex-col items-center justify-center relative shrink-0">
+              <div className="w-[65vmin] h-[65vmin] sm:w-[52vh] sm:h-[52vh] max-w-sm sm:max-w-xl max-h-[48vh] sm:max-h-128 flex flex-col items-center justify-center relative shrink-0">
                 {/* Outer Border */}
                 <div className="absolute inset-0 border-2 border-indigo-500/40 rounded-3xl" />
 
@@ -348,7 +348,7 @@ function KioskContent() {
               {/* Activate / Pause Button — in normal flow, margin below box */}
               <button
                 onClick={toggleCameraScanner}
-                className={`mt-6 sm:mt-8 px-6 sm:px-8 py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm font-extrabold transition-all shadow-xl flex items-center gap-2 sm:gap-2.5 active:scale-95 pointer-events-auto shrink-0 ${
+                className={`mt-3 sm:mt-6 px-5 sm:px-8 py-2 sm:py-3 rounded-2xl text-xs sm:text-sm font-extrabold transition-all shadow-xl flex items-center gap-2 sm:gap-2.5 active:scale-95 pointer-events-auto shrink-0 ${
                   isCameraActive
                     ? "bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/30"
                     : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/30"
@@ -404,7 +404,7 @@ function KioskContent() {
       </main>
 
       {/* ═══ Footer Bar ═══ */}
-      <footer className="h-12 sm:h-14 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border-t border-zinc-200 dark:border-zinc-800 px-4 sm:px-6 flex items-center justify-between z-30 shrink-0 text-zinc-600 dark:text-zinc-400 gap-2">
+      <footer className="h-[calc(3rem+env(safe-area-inset-bottom,0px))] sm:h-14 pb-[env(safe-area-inset-bottom,0px)] bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border-t border-zinc-200 dark:border-zinc-800 px-4 sm:px-6 flex items-center justify-between z-30 shrink-0 text-zinc-600 dark:text-zinc-400 gap-2">
         {/* Left: Terminal info */}
         <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs truncate min-w-0">
           <ShieldCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-indigo-500 dark:text-indigo-400 shrink-0" />
