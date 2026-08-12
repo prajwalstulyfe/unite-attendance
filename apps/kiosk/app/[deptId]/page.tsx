@@ -174,7 +174,7 @@ export default function DepartmentLockedKioskPage({
   return (
     <div className="h-dvh min-h-dvh max-h-dvh w-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 flex flex-col justify-between p-3 sm:p-8 relative overflow-hidden transition-colors duration-200">
       {/* Background Subtle Ambient Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-500/10 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-150 bg-indigo-500/10 rounded-full blur-[140px] pointer-events-none" />
 
       {/* Top Header Bar — Department Locked */}
       <header className="flex items-center justify-between z-20 max-w-6xl w-full mx-auto">
@@ -231,7 +231,7 @@ export default function DepartmentLockedKioskPage({
             {isCameraActive ? (
               <div id="dept-camera-reader" className="w-full h-full object-cover relative overflow-hidden">
                 <motion.div
-                  className="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent shadow-[0_0_15px_#6366f1] z-20 pointer-events-none"
+                  className="absolute inset-x-0 h-1 bg-linear-to-r from-transparent via-indigo-500 to-transparent shadow-[0_0_15px_#6366f1] z-20 pointer-events-none"
                   animate={{ top: ["0%", "95%", "0%"] }}
                   transition={{ repeat: Infinity, duration: 2.2, ease: "linear" }}
                 />
