@@ -4,11 +4,17 @@ import { useState } from "react";
 import { HelpCircle, ChevronDown } from "lucide-react";
 
 export function FaqSection() {
-  const [activeFaq, setActiveFaq] = useState<number | null>(0);
+  const [openFaqs, setOpenFaqs] = useState<number[]>([0, 1]);
+
+  const toggleFaq = (idx: number) => {
+    setOpenFaqs((prev) =>
+      prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx]
+    );
+  };
 
   const faqs = [
     {
-      q: "Do I need to buy a expensive biometric machine?",
+      q: "Do I need to buy an expensive biometric machine?",
       a: "No hardware investment is required! You can use any existing office tablet, iPad, PC, laptop, or smartphone as your dedicated kiosk attendance scanner."
     },
     {
@@ -30,6 +36,22 @@ export function FaqSection() {
     {
       q: "Can we export attendance logs for payroll software?",
       a: "Absolutely! Unite Attendance provides 1-click PDF summary reports and CSV raw data exports with custom date ranges, branch filters, and department metrics ready for any HR or payroll software."
+    },
+    {
+      q: "What happens when internet connection drops at kiosk terminals?",
+      a: "Offline scan queuing! The kiosk terminal caches scans locally and automatically syncs all queued attendance records with full GPS & timestamp telemetry as soon as internet connectivity is restored."
+    },
+    {
+      q: "How are late mark penalties and grace periods calculated?",
+      a: "Unite Attendance features an automated Rules Engine. You can define custom shift start times, grace periods (e.g. 15 mins), late mark thresholds, half-day penalties, and weekend rules per branch."
+    },
+    {
+      q: "Is there a limit on how many branches or kiosk devices I can connect?",
+      a: "Zero hardware limits! You can link unlimited tablet kiosk terminals, web scanners, and branch office locations under a single organization subscription plan."
+    },
+    {
+      q: "Can employees check in using their own personal smartphones?",
+      a: "Yes! Employees can use the Member Mobile Pass PWA to present their dynamic 30-second TOTP QR code at kiosk terminals or perform geofenced remote check-ins if enabled by admin rules."
     }
   ];
 
@@ -42,25 +64,28 @@ export function FaqSection() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {faqs.map((faq, idx) => (
-            <div key={idx} className="p-5 rounded-2xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-2">
-              <button
-                onClick={() => setActiveFaq(activeFaq === idx ? null : idx)}
-                className="w-full flex items-center justify-between text-left font-bold text-sm text-zinc-900 dark:text-white cursor-pointer"
-              >
-                <span className="flex items-center gap-2.5">
-                  <HelpCircle className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                  {faq.q}
-                </span>
-                <ChevronDown className={`h-4 w-4 text-zinc-500 transition-transform ${activeFaq === idx ? "rotate-180" : ""}`} />
-              </button>
-              {activeFaq === idx && (
-                <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed font-medium pt-2 pl-6">
-                  {faq.a}
-                </p>
-              )}
-            </div>
-          ))}
+          {faqs.map((faq, idx) => {
+            const isOpen = openFaqs.includes(idx);
+            return (
+              <div key={idx} className="p-5 rounded-2xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-2 h-fit">
+                <button
+                  onClick={() => toggleFaq(idx)}
+                  className="w-full flex items-center justify-between text-left font-bold text-sm text-zinc-900 dark:text-white cursor-pointer"
+                >
+                  <span className="flex items-center gap-2.5">
+                    <HelpCircle className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                    {faq.q}
+                  </span>
+                  <ChevronDown className={`h-4 w-4 text-zinc-500 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+                </button>
+                {isOpen && (
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed font-medium pt-2 pl-6">
+                    {faq.a}
+                  </p>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

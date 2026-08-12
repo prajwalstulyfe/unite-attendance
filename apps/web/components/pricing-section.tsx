@@ -109,32 +109,32 @@ export function PricingSection() {
             </span>
           </div>
 
-          <div className='grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2'>
+          <div className='grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 sm:gap-4'>
             {PRICING_TIERS.map((tier, idx) => (
               <button
                 key={tier.range}
                 onClick={() => setSelectedTierIdx(idx)}
-                className={`p-2.5 rounded-2xl text-left transition-all cursor-pointer border relative flex flex-col justify-between ${
+                className={`p-3.5 sm:p-4 rounded-2xl text-left transition-all cursor-pointer border relative flex flex-col justify-between min-h-23 ${
                   selectedTierIdx === idx ?
                     'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/30 scale-105 z-10'
                   : 'bg-zinc-50 dark:bg-zinc-950 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
                 }`}>
                 {tier.popular && (
                   <span
-                    className={`absolute -top-2 right-1 px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider ${
-                      selectedTierIdx === idx ? 'bg-amber-400 text-zinc-950' : 'bg-indigo-600 text-white'
+                    className={`absolute -top-2.5 right-2 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider ${
+                      selectedTierIdx === idx ? 'bg-amber-400 text-zinc-950 shadow-sm' : 'bg-indigo-600 text-white'
                     }`}>
                     Popular
                   </span>
                 )}
                 <div>
-                  <p className={`text-[9px] font-black uppercase tracking-tight ${selectedTierIdx === idx ? 'text-indigo-200' : 'text-indigo-500 dark:text-indigo-400'}`}>
+                  <p className={`text-[10px] sm:text-[11px] font-black uppercase tracking-tight ${selectedTierIdx === idx ? 'text-indigo-200' : 'text-indigo-600 dark:text-indigo-400'}`}>
                     {tier.name.replace(' Pack', '')}
                   </p>
-                  <p className='text-[10px] font-bold leading-tight mt-0.5'>{tier.range.replace(' Employees', '')}</p>
+                  <p className='text-[10px] font-bold leading-snug mt-1'>{tier.range.replace(' Employees', '')}</p>
                   <p
-                    className={`text-[10px] font-semibold mt-0.5 ${selectedTierIdx === idx ? 'text-indigo-100' : 'text-zinc-500'}`}>
-                    ₹{tier.launchPrice}/mo
+                    className={`text-[10px] font-semibold mt-1 ${selectedTierIdx === idx ? 'text-indigo-100' : 'text-zinc-500'}`}>
+                    ₹{tier.launchPrice.toLocaleString()}/mo
                   </p>
                 </div>
               </button>
@@ -184,31 +184,31 @@ export function PricingSection() {
         </div>
 
         {/* Enterprise & Custom Quote Block */}
-        <div className='bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 max-w-4xl mx-auto'>
-          <div className='space-y-1 text-center md:text-left'>
-            <span className='text-[10px] font-black uppercase text-purple-600 dark:text-purple-400 tracking-wider'>
+        <div className='bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 w-full'>
+          <div className='space-y-1.5 text-center md:text-left'>
+            <span className='inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-600 dark:text-purple-400 text-[10px] font-black uppercase tracking-wider'>
               Large Enterprise (1,001+ Employees)
             </span>
-            <h4 className='text-sm sm:text-base font-extrabold text-zinc-900 dark:text-white'>
+            <h4 className='text-base sm:text-lg font-black text-zinc-900 dark:text-white tracking-tight'>
               Need Custom Deployment or Dedicated SLA?
             </h4>
-            <p className='text-xs text-zinc-500 font-medium'>
-              Custom multi-city cluster deployments with dedicated account manager and priority support.
+            <p className='text-xs text-zinc-500 dark:text-zinc-400 font-medium'>
+              Custom multi-city cluster deployments with dedicated account manager and priority SLA support.
             </p>
           </div>
           <a
             href={`${urls.admin}/register`}
-            className='px-5 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-bold transition-all shrink-0 cursor-pointer'>
+            className='px-6 py-3.5 rounded-2xl bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-extrabold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all shrink-0 cursor-pointer'>
             Contact Sales
           </a>
         </div>
 
         {/* Included Features Across All Tiers */}
-        <div className='max-w-4xl mx-auto space-y-4 pt-2'>
-          <h3 className='text-center text-xs font-bold text-zinc-500 uppercase tracking-widest'>
+        <div className='w-full space-y-6 pt-4'>
+          <h3 className='text-center text-xs font-extrabold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest'>
             Included Free in Every Plan
           </h3>
-          <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3'>
+          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5'>
             {[
               'Multi-Branch & Dept Support',
               'Dynamic TOTP Pass Scanning',
@@ -221,8 +221,8 @@ export function PricingSection() {
             ].map((feat) => (
               <div
                 key={feat}
-                className='flex items-center gap-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-900/60 p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800'>
-                <CheckCircle2 className='h-3.5 w-3.5 text-emerald-500 shrink-0' />
+                className='flex items-center gap-3 text-xs font-bold text-zinc-800 dark:text-zinc-200 bg-white dark:bg-zinc-900 p-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors'>
+                <CheckCircle2 className='h-4 w-4 text-emerald-500 shrink-0' />
                 <span>{feat}</span>
               </div>
             ))}

@@ -93,7 +93,7 @@ export function HeroSection() {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, delay: 0.45 }}
-        className='mt-16 w-full max-w-5xl relative'>
+        className='mt-16 w-full max-w-7xl relative'>
         {/* Outer glow ring */}
         <div className='absolute -inset-px rounded-[28px] bg-linear-to-b from-indigo-500/30 via-purple-500/10 to-transparent pointer-events-none' />
 
