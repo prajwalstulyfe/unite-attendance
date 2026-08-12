@@ -99,7 +99,7 @@ export function PricingSection() {
         </div>
 
         {/* Tier Selector Dropdown / Pills for Mobile & Desktop */}
-        <div className='bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-4 sm:p-6 shadow-xl max-w-4xl mx-auto space-y-5'>
+        <div className='bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-4 sm:p-6 shadow-xl w-full space-y-5'>
           <div className='flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3'>
             <span className='text-xs font-extrabold uppercase tracking-wider text-zinc-500'>
               Select Plan & Employee Strength
