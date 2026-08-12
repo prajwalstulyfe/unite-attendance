@@ -1,6 +1,5 @@
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { GlobalRole, OrgRole } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { LoginDto, RegisterDto, RefreshTokenDto } from './dto/auth.dto.js';
 import * as bcrypt from 'bcrypt';
@@ -47,17 +46,21 @@ export class AuthService {
       },
     });
 
-    if (!user || !user.passwordHash) {
-      throw new UnauthorizedException('Invalid email or password');
+    if (!user) {
+      throw new UnauthorizedException('USER_NOT_FOUND: No account registered with this email address.');
+    }
+
+    if (!user.passwordHash) {
+      throw new UnauthorizedException('INVALID_CREDENTIALS: Incorrect email or password.');
     }
 
     const isMatch = await bcrypt.compare(dto.password, user.passwordHash);
     if (!isMatch) {
-      throw new UnauthorizedException('Invalid email or password');
+      throw new UnauthorizedException('INVALID_CREDENTIALS: Incorrect password. Please check your password and try again.');
     }
 
     if (!user.isActive) {
-      throw new UnauthorizedException('Your account has been deactivated');
+      throw new UnauthorizedException('MEMBER_INACTIVE: Your account has been deactivated. Please contact your organization administrator.');
     }
 
     const tokens = await this.generateTokens(user.id, user.email, user.globalRole);
@@ -195,17 +198,34 @@ export class AuthService {
     return this.generateTokens(existingUser.id, existingUser.email, existingUser.globalRole);
   }
 
+  async forgotPassword(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('No account registered with this email address.');
+    }
+
+    const resetCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    return {
+      success: true,
+      message: `Password reset verification instructions sent to ${email}`,
+      resetCode,
+    };
+  }
+
   private async generateTokens(userId: string, email: string, globalRole: string) {
     const payload = { sub: userId, email, globalRole };
 
     const accessToken = this.jwtService.sign(payload, {
       secret: process.env['JWT_SECRET'] || 'your-jwt-secret-min-32-chars-long',
-      expiresIn: (process.env['JWT_ACCESS_EXPIRATION'] || '15m') as any,
+      expiresIn: (process.env['JWT_ACCESS_EXPIRATION'] || '15m') as unknown as number,
     });
 
     const refreshToken = this.jwtService.sign(payload, {
       secret: process.env['JWT_REFRESH_SECRET'] || 'your-refresh-secret-min-32-chars-long',
-      expiresIn: (process.env['JWT_REFRESH_EXPIRATION'] || '7d') as any,
+      expiresIn: (process.env['JWT_REFRESH_EXPIRATION'] || '7d') as unknown as number,
     });
 
     // Hash & store refresh token

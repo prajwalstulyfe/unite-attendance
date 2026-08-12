@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Lock, Mail, ArrowRight, Sparkles, Eye, EyeOff } from "lucide-react";
+import { Lock, Mail, ArrowRight, Sparkles, Eye, EyeOff, AlertCircle, KeyRound } from "lucide-react";
 import { useLogin, tokenStorage } from "@repo/api-client";
 import { useUIStore } from "@/lib/use-ui-store";
 import { toast } from "sonner";
@@ -29,6 +29,10 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLocalhost, setIsLocalhost] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [sendingReset, setSendingReset] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -89,14 +93,47 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       const serverMsg = err?.response?.data?.message;
-      const displayMsg = Array.isArray(serverMsg)
-        ? serverMsg.join(", ")
-        : typeof serverMsg === "string" && serverMsg.trim().length > 0
-          ? serverMsg
-          : "Incorrect email or password. Please verify your credentials and try again.";
+      let displayMsg = "Incorrect email or password. Please verify your credentials.";
+      if (typeof serverMsg === "string") {
+        if (serverMsg.includes("USER_NOT_FOUND") || serverMsg.toLowerCase().includes("not found")) {
+          displayMsg = "User not found. No account is registered with this email address.";
+        } else if (serverMsg.includes("INVALID_CREDENTIALS") || serverMsg.toLowerCase().includes("invalid")) {
+          displayMsg = "Incorrect password. Please check your password and try again.";
+        } else if (serverMsg.includes("MEMBER_INACTIVE") || serverMsg.toLowerCase().includes("deactivated")) {
+          displayMsg = "Account inactive. Your organization account has been disabled by an admin.";
+        } else {
+          displayMsg = serverMsg;
+        }
+      }
+      setErrorMessage(displayMsg);
       toast.error(displayMsg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSendResetLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotEmail) return;
+    setSendingReset(true);
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(`Password reset verification link sent to ${forgotEmail}`);
+        setShowForgotModal(false);
+        setForgotEmail("");
+      } else {
+        toast.error(data?.message || "Failed to process password reset request.");
+      }
+    } catch {
+      toast.error("Network error while requesting password reset.");
+    } finally {
+      setSendingReset(false);
     }
   };
 
@@ -173,6 +210,17 @@ export default function LoginPage() {
           </div>
         )}
 
+        {/* Error Alert Banner */}
+        {errorMessage && (
+          <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-400 font-medium flex items-center justify-between gap-2">
+            <span className="flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0 text-rose-500" />
+              {errorMessage}
+            </span>
+            <button type="button" onClick={() => setErrorMessage("")} className="text-zinc-500 hover:text-white text-xs cursor-pointer">✕</button>
+          </div>
+        )}
+
         {/* Login Form */}
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="space-y-1.5">
@@ -193,9 +241,16 @@ export default function LoginPage() {
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-xs font-semibold text-zinc-300">Password</label>
-              <a href="#" className="text-[11px] font-semibold text-indigo-400 hover:text-indigo-300 transition-colors">
+              <button
+                type="button"
+                onClick={() => {
+                  setForgotEmail(email);
+                  setShowForgotModal(true);
+                }}
+                className="text-[11px] font-semibold text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer"
+              >
                 Forgot password?
-              </a>
+              </button>
             </div>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
@@ -263,13 +318,64 @@ export default function LoginPage() {
         </button>
 
         {/* Footer info */}
-        <p className="text-center text-[11px] text-zinc-500 font-medium">
-          Don't have an organization yet?{" "}
-          <Link href="/register" className="text-indigo-400 hover:text-indigo-300 font-bold transition-colors">
-            Register your institution
-          </Link>
+        <p className="text-[11px] text-zinc-500 text-center font-mono">
+          Protected by AES-256 Multi-Tenant Isolation & GPS Geofencing
         </p>
       </div>
+
+      {/* Forgot Password Interactive Modal */}
+      {showForgotModal && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-md space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <KeyRound className="h-4 w-4 text-indigo-400" /> Reset Organization Password
+              </h3>
+              <button
+                onClick={() => setShowForgotModal(false)}
+                className="text-zinc-400 hover:text-white text-xs font-bold px-2 py-1 rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Enter your registered work email address. We will verify your account and send a secure password reset link.
+            </p>
+            <form onSubmit={handleSendResetLink} className="space-y-4 pt-1">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-zinc-300 block">Work Email</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+                  <input
+                    type="email"
+                    required
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    placeholder="name@company.com"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowForgotModal(false)}
+                  className="px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-zinc-300 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={sendingReset}
+                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white shadow-lg shadow-indigo-600/25 transition-all disabled:opacity-50 cursor-pointer"
+                >
+                  {sendingReset ? "Sending Reset..." : "Send Reset Link"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

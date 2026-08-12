@@ -1,9 +1,18 @@
 import { Controller, Post, Get, Body, HttpCode, HttpStatus, UseGuards, Req, Res } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { Request, Response } from 'express';
 import { AuthService } from './auth.service.js';
 import { LoginDto, RegisterDto, RefreshTokenDto } from './dto/auth.dto.js';
 import { Public } from './decorators/public.decorator.js';
 import { CurrentUser } from './decorators/current-user.decorator.js';
+
+interface GoogleUserReq extends Request {
+  user?: {
+    email: string;
+    firstName: string;
+    lastName: string;
+  };
+}
 
 @Controller('auth')
 export class AuthController {
@@ -33,6 +42,14 @@ export class AuthController {
   }
 
   @Public()
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(@Body('email') email: string) {
+    const data = await this.authService.forgotPassword(email);
+    return { success: true, data, timestamp: new Date().toISOString() };
+  }
+
+  @Public()
   @Get('google')
   @UseGuards(AuthGuard('google'))
   async googleAuth() {
@@ -42,7 +59,7 @@ export class AuthController {
   @Public()
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
-  async googleAuthRedirect(@Req() req: any, @Res() res: any) {
+  async googleAuthRedirect(@Req() req: GoogleUserReq, @Res() res: Response) {
     const host = req.headers?.host || '';
     const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1');
 
@@ -51,16 +68,17 @@ export class AuthController {
 
     const adminUrl = process.env['NEXT_PUBLIC_ADMIN_URL'] || defaultAdminUrl;
     const appUrl = process.env['NEXT_PUBLIC_APP_URL'] || defaultAppUrl;
-    const state = req.query?.state || '';
+    const state = (req.query?.state as string) || '';
     const referer = req.headers?.referer || '';
     const isAdmin = state.includes('admin') || referer.includes('admin');
     const frontendUrl = isAdmin ? adminUrl : appUrl;
 
     try {
-      const tokens = await this.authService.validateGoogleUser(req.user);
+      const googleUser = req.user || { email: '', firstName: '', lastName: '' };
+      const tokens = await this.authService.validateGoogleUser(googleUser);
       return res.redirect(`${frontendUrl}/login?token=${tokens.accessToken}&refresh=${tokens.refreshToken}`);
-    } catch (err: any) {
-      const errorMsg = encodeURIComponent(err.message || 'Google Authentication Failed');
+    } catch (err: unknown) {
+      const errorMsg = encodeURIComponent((err as Error)?.message || 'Google Authentication Failed');
       return res.redirect(`${frontendUrl}/login?error=${errorMsg}`);
     }
   }

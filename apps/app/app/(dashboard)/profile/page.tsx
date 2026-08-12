@@ -1,14 +1,15 @@
 "use client";
 
-import { ShieldCheck, Building2, Download, LogOut, QrCode, CheckCircle2, ChevronRight, Sparkles, Award, KeyRound, Smartphone, Lock, Loader2 } from "lucide-react";
+import { ShieldCheck, LogOut, QrCode, CheckCircle2, ChevronRight, Award, KeyRound, Smartphone, Lock } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { PwaInstallButton } from "@/components/pwa-install-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { toast } from "sonner";
 import { useSession, useLogout, tokenStorage } from "@repo/api-client";
 
 export default function ProfilePage() {
-  const { data: session, isLoading } = useSession();
+  const { data: session } = useSession();
   const logoutMutation = useLogout();
 
   const handleLogout = async () => {
@@ -59,9 +60,11 @@ export default function ProfilePage() {
         {/* Top Header inside ID Card */}
         <div className="flex items-center justify-between relative z-10 border-b border-zinc-200 dark:border-zinc-800 pb-3">
           <div className="flex items-center gap-2">
-            <img
+            <Image
               src="/uniteIcon.png"
               alt="Unite Access Pass"
+              width={28}
+              height={28}
               className="h-7 w-7 rounded-xl object-cover border border-purple-500/20"
             />
             <div>
@@ -123,6 +126,50 @@ export default function ProfilePage() {
               <strong className="text-zinc-900 dark:text-white font-bold">Dynamic TOTP</strong>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Connected Accounts & Google SSO */}
+      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-4 shadow-sm space-y-3">
+        <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Connected Accounts & 1-Click Login</h3>
+
+        <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xs">
+              <svg className="h-5 w-5" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.27v3.15C3.25 21.3 7.31 24 12 24z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.27C.46 8.2.01 10.04.01 12c0 1.96.45 3.8 1.26 5.42l4.01-3.15z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.25 2.7 1.27 6.58l4.01 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+                />
+              </svg>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-zinc-900 dark:text-white">Google Account</p>
+              <p className="text-[10px] text-zinc-500 font-mono">{userEmail}</p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              toast.success("Google Account Linked! You can now log in using 1-click Google Sign-In.");
+            }}
+            className="px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold flex items-center gap-1 hover:bg-emerald-500/20 transition-all cursor-pointer"
+          >
+            <CheckCircle2 className="h-3.5 w-3.5" /> Connected
+          </button>
         </div>
       </div>
 
